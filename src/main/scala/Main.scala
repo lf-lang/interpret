@@ -31,7 +31,8 @@ object Main {
 
     val topConfig = TopConfig(
       coreCfg = coreCfg,
-      nCores = nCores
+      nCores = nCores,
+      freq = 50000000 // Assume 50MHz
     )
 
     // Pass configuration to FlexPRET processor.

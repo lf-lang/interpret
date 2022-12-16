@@ -1,52 +1,10 @@
-package flexpret.Wishbone
+package interpret
 import chisel3._
 import chisel3.util._
 import Core.FlexpretConstants._
 import flexpret.core.{BusIO, FlexpretConfiguration}
 
 import wishbone.{WishboneIO}
-
-// class WishboneIO(addrBits: Int) extends Bundle {
-//   val addr = Output(UInt(addrBits.W))
-//   val wrData = Output(UInt(32.W))
-//   val rdData = Input(UInt(32.W))
-//   val we = Output(Bool())
-//   val sel = Output(UInt(4.W))
-//   val stb = Output(Bool())
-//   val ack = Input(Bool())
-//   val cyc = Output(Bool())
-
-//   def driveReadReq(_addr: UInt): Unit = {
-//     addr := _addr
-//     wrData := 0.U
-//     we := false.B
-//     cyc := true.B
-//     sel := 15.U// Assume we always want 4 bytes for now
-//     stb := true.B
-//   }
-
-//   def driveWriteReq(_addr: UInt, data: UInt) = {
-//     addr := _addr
-//     wrData := data
-//     we := true.B
-//     cyc := true.B
-//     sel := 15.U // Assume we always want 4 bytes for now
-//     stb := true.B
-//   }
-
-//   def driveDefaults(): Unit = {
-//     addr := 0.U
-//     wrData := 0.U
-//     we := false.B
-//     cyc := false.B
-//     sel := 0.U
-//     stb := 0.U
-//   }
-//   def driveDefaultsFlipped(): Unit = {
-//     rdData := 0.U
-//     ack := false.B
-//   }
-// }
 
 class WishboneMaster(addrBits: Int)(implicit conf: FlexpretConfiguration) extends Module {
   val wbIO = IO(new WishboneIO(addrBits))
