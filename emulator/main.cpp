@@ -20,6 +20,8 @@ int main(int argc, char* argv[]) {
 
   VTop* top = new VTop;
 
+  uartsim_init();
+
   // FIXME: Set this via command-line arguments.
   while (timestamp < 3000000 && !Verilated::gotFinish()) {
     top->clock = 1;
@@ -27,6 +29,7 @@ int main(int argc, char* argv[]) {
     timestamp+=1;
     if (timestamp > 10) {
       uartsim_print_rx(&top->io_uart_tx);
+      uartsim_write(&top->io_uart_rx);
     }
     top->clock = 0;
     top->eval();

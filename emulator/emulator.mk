@@ -6,7 +6,7 @@
 EMULATOR_BIN = $(EMULATOR_DIR)/fp-emu
 HDL_SCRIPTS = $(SCRIPTS_DIR)/hdl
 
-$(EMULATOR_BIN): $(VERILOG_RAW) $(EMULATOR_DIR)/main.cpp $(HDL_SCRIPTS)/simify_verilog.py
+$(EMULATOR_BIN): $(VERILOG_RAW) $(EMULATOR_DIR)/main.cpp $(EMULATOR_DIR)/uartsim.cpp $(HDL_SCRIPTS)/simify_verilog.py
 	# Inject the right simulation constructs
 	# FIXME: Remove this alltogether, currently only used for  enabling tracing
 	$(HDL_SCRIPTS)/simify_verilog.py $(VERILOG_RAW) > $(EMULATOR_DIR)/$(MODULE).sim.v
