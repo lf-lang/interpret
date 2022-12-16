@@ -4,6 +4,7 @@
 ```
 git clone git@github.com:lf-lang/interpret.git --recursive
 cd interpret
+source env.bash
 make emulator
 ```
 
