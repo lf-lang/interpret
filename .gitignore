@@ -4,4 +4,16 @@
 project/
 target/
 build/
+emulator/*.v
 emulator/obj_dir
+
+# Generated files
+**/*.mem
+**/*.out
+**/*.dump.txt
+**/*.vcd
+**/*.riscv
+**/*.map
+**/*.orig
+**/*.dump
+**/fp-emu
