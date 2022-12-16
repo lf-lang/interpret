@@ -16,9 +16,9 @@ typedef enum {
     UART_TX_DONE
 } uart_tx_state_t;
 
-// Hard-coded to 100MHz clock and 115200
+// Hard-coded to 50 MHz clock and 115200
 // FIXME: Calculate ticks_per_bit
-int ticks_per_bit=868;
+int ticks_per_bit=434;
 
 
 int rx_tick_count=0;

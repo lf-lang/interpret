@@ -92,7 +92,7 @@ class Top(topCfg: TopConfig) extends Module {
   io.uart.tx := wbUarts(0).ioUart.tx
 
   // Wait until all cores are done
-  when(regCoreDone.asUInt().andR()) {
+  when(regCoreDone.asUInt.andR) {
     printf("All cores are done terminating\n")
     assert(false.B, "Program terminated sucessfully")
   }
