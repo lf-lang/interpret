@@ -7,7 +7,7 @@ cd interpret
 make emulator
 ```
 
-#### Hello World Noc
+#### Hello World NoC
 ```
 cd programs/noc/HelloWorld
 make
@@ -29,7 +29,7 @@ The default verilator emulator also contains C++ code that writes a sequence of 
 Verify that all the cores are able to receive this by:
 
 ```
-cd programs/uart/tx
+cd programs/uart/rx
 make
 fp-emu
 ```
