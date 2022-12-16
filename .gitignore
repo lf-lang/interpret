@@ -1,0 +1,7 @@
+.bsp/
+.metals/
+.vscode/
+project/
+target/
+build/
+emulator/obj_dir
