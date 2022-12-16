@@ -6,6 +6,7 @@
  */
 #include "VTop.h"
 #include "verilated.h"
+#include "uartsim.h"
 
 uint64_t timestamp = 0;
 
@@ -23,11 +24,13 @@ int main(int argc, char* argv[]) {
   while (timestamp < 3000000 && !Verilated::gotFinish()) {
     top->clock = 1;
     top->eval();
-    timestamp++;
-
+    timestamp+=1;
+    if (timestamp > 10) {
+      uartsim_print_rx(&top->io_uart_tx);
+    }
     top->clock = 0;
     top->eval();
-    timestamp++;
+    timestamp+=1;
   }
 
   delete top;

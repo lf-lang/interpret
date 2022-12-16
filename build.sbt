@@ -2,7 +2,7 @@
 
 val chiselVersion = "3.5.5"
 
-lazy val root = (project in file("."))
+lazy val interpret = (project in file("."))
   .settings(
     name := "interpret",
     libraryDependencies ++= Seq(

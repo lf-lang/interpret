@@ -12,7 +12,7 @@ $(EMULATOR_BIN): $(VERILOG_RAW) $(EMULATOR_DIR)/main.cpp $(HDL_SCRIPTS)/simify_v
 	$(HDL_SCRIPTS)/simify_verilog.py $(VERILOG_RAW) > $(EMULATOR_DIR)/$(MODULE).sim.v
 	
 
-	(cd $(EMULATOR_DIR) && verilator --cc $(MODULE).sim.v --exe --trace --build main.cpp)
+	(cd $(EMULATOR_DIR) && verilator --cc $(MODULE).sim.v --timescale 1ns/1ns --exe --trace --build main.cpp uartsim.cpp)
 
 	cp $(EMULATOR_DIR)/obj_dir/V$(MODULE) $(EMULATOR_BIN)
 

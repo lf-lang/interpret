@@ -31,7 +31,7 @@ class WishboneBus(
   var devAddr = Seq(0)
   for ((dev,i) <- io.wbDevices.zipWithIndex) {
     // Calculate address range of this device
-    devAddr = devAddr ++ Seq(devAddr.last + (1 << i))
+    devAddr = devAddr ++ Seq(devAddr.last + (1 << deviceWidths(i)))
     dev.addr := io.wbMaster.addr
     dev.wrData := io.wbMaster.wrData
 
@@ -44,7 +44,8 @@ class WishboneBus(
       dev.we := io.wbMaster.we
       dev.stb := io.wbMaster.stb
       dev.cyc := io.wbMaster.cyc
-      io.wbMaster.rdData := dev.wrData
+      io.wbMaster.rdData := dev.rdData
+      io.wbMaster.ack := dev.ack
     }
   }
 }
