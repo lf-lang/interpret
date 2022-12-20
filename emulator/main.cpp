@@ -18,12 +18,20 @@ int main(int argc, char* argv[]) {
   Verilated::commandArgs(argc, argv);
   Verilated::traceEverOn(true);
 
-  VTop* top = new VTop;
 
-  uartsim_init();
+  VTop* top = new VTop;
+  
+  if (argc == 2) {
+    uartsim_init(argv[1]);
+  } else {
+    uartsim_init("");
+  }
+
+  // Drive UART pin high by default
+  top->io_uart_rx=1;
 
   // FIXME: Set this via command-line arguments.
-  while (timestamp < 3000000 && !Verilated::gotFinish()) {
+  while (!Verilated::gotFinish()) {
     top->clock = 1;
     top->eval();
     timestamp+=1;
