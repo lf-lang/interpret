@@ -38,11 +38,11 @@ fp-emu test.bin # test.bin will be written to the UART RX pin
 
 #### Bootloader
 A simple serial bootloader using the UART peripheral is also provided. This program will receive the application as a sequence of bytes through the UART peripheral. It expects a simple protocol as follows:
-[SYNC_ID LEN DATA SYNC_ID]
-SYNC_ID = 0xC0 0xDE
-LEN = uint16 representing the length, MSB first.
-DATA is the program should be of length LEN
-SYNC_ID is as above.
+- [SYNC_ID LEN DATA SYNC_ID]
+- SYNC_ID = 0xC0 0xDE
+- LEN = uint16 representing the length, MSB first.
+- DATA is the program should be of length LEN
+- SYNC_ID is as above.
 
 The application most be linked with a special linker script which places the application at a 4KB offset from bottom of ISPM. The script in `programs/scripts/compile_app.sh` does this. The script `programs/scripts/serialize_app.py` takes the .mem file produced and wraps it in the simple protocol explained above.
 
