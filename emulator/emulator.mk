@@ -5,14 +5,21 @@
 
 EMULATOR_BIN = $(EMULATOR_DIR)/fp-emu
 HDL_SCRIPTS = $(SCRIPTS_DIR)/hdl
+TRACE ?= 1
 
 $(EMULATOR_BIN): $(VERILOG_RAW) $(EMULATOR_DIR)/main.cpp $(EMULATOR_DIR)/uartsim.cpp $(HDL_SCRIPTS)/simify_verilog.py
 	# Inject the right simulation constructs
 	# FIXME: Remove this alltogether, currently only used for  enabling tracing
+ifeq ($(TRACE),1)
+	@echo "Enabling tracing on Verilator"
 	$(HDL_SCRIPTS)/simify_verilog.py $(VERILOG_RAW) > $(EMULATOR_DIR)/$(MODULE).sim.v
-	
-
 	(cd $(EMULATOR_DIR) && verilator --cc $(MODULE).sim.v --timescale 1ns/1ns --exe --trace --build main.cpp uartsim.cpp)
+else
+	@echo "Disabling tracing on Verilator"
+	cp $(VERILOG_RAW) $(EMULATOR_DIR)/$(MODULE).sim.v
+	(cd $(EMULATOR_DIR) && verilator --cc $(MODULE).sim.v --timescale 1ns/1ns --exe --build main.cpp uartsim.cpp)
+endif
+
 
 	cp $(EMULATOR_DIR)/obj_dir/V$(MODULE) $(EMULATOR_BIN)
 

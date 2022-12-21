@@ -1,5 +1,5 @@
 SRCS=bootloader.c
-LINKER_SCRIPT=flexpret_btl.ld
+LINKER_SCRIPT=$(FP_ROOT)/programs/linker/flexpret_btl.ld
 CC=riscv32-unknown-elf-gcc
 OBJDUMP=riscv32-unknown-elf-objdump
 OBJCOPY=riscv32-unknown-elf-objcopy
