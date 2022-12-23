@@ -11,7 +11,9 @@ case class TopConfig(
   coreCfgs : Seq[FlexpretConfiguration],
   nCores : Int,
   freq : Int
-)
+){
+  require(nCores <= 4)
+}
 
 
 class TopIO(topCfg: TopConfig) extends Bundle {
