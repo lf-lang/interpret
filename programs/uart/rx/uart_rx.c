@@ -2,9 +2,9 @@
 #include <flexpret_io.h>
 #include <flexpret_uart.h>
 
-// Core0 -> Core2
 int main() {
-    _fp_print(40);
+    int core_id = read_csr(CSR_COREID);
+    _fp_print(core_id);
     uint8_t recv;
     for (int i = 0; i<10; i++) {
         recv=uart_receive();

@@ -11,10 +11,7 @@ build: btl.mem
 btl.mem: btl.binary.txt
 	xxd -c 4 -e btl.binary.txt | cut -c11-18 > btl.mem
 	xxd -c 4 -e btl.binary.txt > btl.mem.orig
-	cp btl.mem core0.mem
-	cp btl.mem core1.mem
-	cp btl.mem core2.mem
-	cp btl.mem core3.mem
+	cp btl.mem ispm.mem
 
 
 btl.binary.txt: btl.riscv

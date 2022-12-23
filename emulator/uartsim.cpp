@@ -87,6 +87,7 @@ void uartsim_print_rx(unsigned char* rxd) {
         }
     } else if(rx_state == UART_RX_DONE) {
         if (--rx_tick_count == 0) {
+            printf("Verilator received: %u\n", (unsigned int) rx);
             rx_state = UART_RX_IDLE;
         }
     }
@@ -99,7 +100,6 @@ void uartsim_write(unsigned char* tx) {
             if (!app_file.eof()) {
                 app_file.read(&tx_byte,1);
                 tx_state = UART_TX_START;
-                printf("Writing %u\n", (unsigned char) tx_byte);
             } else {
                 tx_state = UART_TX_DONE;
             }

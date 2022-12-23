@@ -1,24 +1,29 @@
 # InterPRET
 
 ## Getting started
+
+#### Building a quad-core InterPRET emulator
 ```
 git clone git@github.com:lf-lang/interpret.git --recursive
 cd interpret
 source env.bash
-make emulator
+make emulator N_CORES=4
 ```
+#### Emulating programs on the InterPRET
+For simplicity, each core in the emulated InterPRET will execute the same program. It gets loaded into the instruction scratch-pad memory by Verilator. Verilator expects a file named `ispm.mem` to be located in the folder from which `fp-emu` is invoked. This file will be loaded into all the ISPMs of all the cores. To differentiate between the cores, each has a unique core id.
 
-#### Hello World NoC
+
+#### Hello World
+In HelloWorld we show how we can have each core execute different parts of the whole program by reading its core-id.
 ```
-cd programs/noc/HelloWorld
+cd programs/HelloWorld
 make
 fp-emu
 ```
 
 #### UART TX
 The verilator emulator also contains C++ code which listens on the top-level uart tx pin and prints all bytes in receives.
-Verify that this works by running the following program.
-
+The following program has one of the core write a byte through its uart device. Verilator should detect and print out this byte.
 ```
 cd programs/uart/tx
 make
@@ -26,13 +31,20 @@ fp-emu
 ```
 
 #### UART RX
-The default verilator emulator also contains Code that can open a binary file and write the bytes
-to the uart RX pin after boot.
+Verilator can also pass data to the InterPRET uart_rx pin. This examples writes a couple of bytes from Verilator which should be detected by all cores.
 
 ```
 cd programs/uart/rx
 make
 fp-emu test.bin # test.bin will be written to the UART RX pin
+```
+
+#### Hello World NoC
+The HelloWorld NoC program shows how different cores can communicate, concurrently, through the NoC. 
+```
+cd programs/noc/HelloWorld
+make
+fp-emu
 ```
 
 

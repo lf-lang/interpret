@@ -6,21 +6,17 @@ object Main {
   def main(args: Array[String]): Unit = {
     println("Hello World")
 
-    // Parse the coreCfg string passed as a command line argument
-    val coreCfg = if (args.length > 0) {
-      FlexpretConfiguration.parseString(args(0))
-    } else {
-      FlexpretConfiguration.defaultConfig
-    }
+    assert(args.length >= 2)
 
     // Parse second parameter which is the number of cores
-    val nCores = if (args.length > 1) {
-      args(1).toInt
-    } else {
-      1
+    val nCores = args(1).toInt
+
+    // Parse the coreCfg string passed as a command line argument
+    val coreCfgs = for (i <- 0 until nCores) yield {
+      FlexpretConfiguration.parseString(confString=args(0), coreId=i)
     }
 
-    println(s"Build SOC with $nCores cores")
+    println(s"Building $nCores-core SoC")
 
     // Extract arguments to pass further to the chisel scala compiler
     val chiselArgs = if (args.length > 2) {
@@ -30,7 +26,7 @@ object Main {
     }
 
     val topConfig = TopConfig(
-      coreCfg = coreCfg,
+      coreCfgs = coreCfgs,
       nCores = nCores,
       freq = 50000000 // Xilinx board runs with 50 MHz
     )

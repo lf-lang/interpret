@@ -8,7 +8,7 @@ import s4noc.Config
 
 
 case class TopConfig(
-  coreCfg : FlexpretConfiguration,
+  coreCfgs : Seq[FlexpretConfiguration],
   nCores : Int,
   freq : Int
 )
@@ -26,12 +26,12 @@ class TopIO(topCfg: TopConfig) extends Bundle {
 class Top(topCfg: TopConfig) extends Module {
   val io = IO(new TopIO(topCfg))
   // Flexpret cores and wb masters
-  val cores = for (i <- 0 until topCfg.nCores) yield Module(new Core(topCfg.coreCfg))
-  val wbMasters = for (i <- 0 until topCfg.nCores) yield Module(new WishboneMaster(topCfg.coreCfg.busAddrBits)(topCfg.coreCfg))
+  val cores = for (i <- 0 until topCfg.nCores) yield Module(new Core(topCfg.coreCfgs(i)))
+  val wbMasters = for (i <- 0 until topCfg.nCores) yield Module(new WishboneMaster(topCfg.coreCfgs(i).busAddrBits)(topCfg.coreCfgs(i)))
   val wbUarts = for (i <- 0 until topCfg.nCores) yield Module(new WishboneUart()(topCfg))
   val wbBuses = for (i <- 0 until topCfg.nCores) yield {
     Module(new WishboneBus(
-      masterWidth =  topCfg.coreCfg.busAddrBits,
+      masterWidth =  topCfg.coreCfgs(i).busAddrBits,
       deviceWidths = Seq(4,4) // NOC width=4 and Uart width = 4
     ))
   }
@@ -69,7 +69,7 @@ class Top(topCfg: TopConfig) extends Module {
     cores(i).io.gpio.in.map(_ := false.B)
 
     // Initialize instruction scratchpad memory
-    loadMemoryFromFileInline(cores(i).imem.get.ispm, s"core${i}.mem")
+    loadMemoryFromFileInline(cores(i).imem.get.ispm, "ispm.mem")
 
     // Catch termination from core
     when(cores(i).io.host.to_host === "hdeaddead".U) {
