@@ -31,7 +31,8 @@ class WishboneMaster(addrBits: Int)(implicit conf: FlexpretConfiguration) extend
   val wDoRead = WireDefault(false.B)
   val wDoWrite = WireDefault(false.B)
   assert(!(wDoRead && wDoWrite), "Both read and write at the same time")
-  assert(!(busIO.enable && regState =/= sIdle), "Recevied bus request while busy")
+  // assert(!(busIO.enable && regState =/= sIdle), "Received bus request while busy")  // How is the CPU supposed to know not to send bus request if it cannot even read the status of the WishboneMaster?
+  regBusRead := regStatus
 
   switch(regState) {
     // Idle state. Waiting for request from FlexPret Core
@@ -62,7 +63,6 @@ class WishboneMaster(addrBits: Int)(implicit conf: FlexpretConfiguration) extend
           when(addr === MMIO_READ_DATA) {
             regBusRead := regReadData
           }.elsewhen(addr === MMIO_STATUS) {
-            regBusRead := regStatus
             regStatus := false.B
           }.otherwise {
             assert(false.B, "Tried to read from invalid address %d on wishbone bus master", addr)
