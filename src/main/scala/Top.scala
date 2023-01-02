@@ -52,7 +52,9 @@ class Top(topCfg: TopConfig) extends Module {
     cores(i).io.int_exts.foreach(_ := false.B)
     // Connect to wbM master
     cores(i).io.bus <> wbMasters(i).busIO
-    cores(i).io.noc <> noc.io(i)
+    cores(i).io.noc.in <> noc.io.channels(i).in
+    cores(i).io.noc.out <> noc.io.channels(i).out
+    noc.io.read(i) := cores(i).io.noc.read
 
     // Connect WbMaster to WbBus
     wbMasters(i).wbIO <> wbBuses(i).io.wbMaster
