@@ -3,7 +3,7 @@ import chisel3._
 import chisel3.util.experimental.loadMemoryFromFileInline // To load program into ISpm
 import flexpret.core.{Core, FlexpretConfiguration, GPIO, HostIO, ISpm}
 
-import wishbone.{S4NoCTopWB}
+import s4noc.S4NoC
 import s4noc.Config
 
 
@@ -34,14 +34,12 @@ class Top(topCfg: TopConfig) extends Module {
   val wbBuses = for (i <- 0 until topCfg.nCores) yield {
     Module(new WishboneBus(
       masterWidth =  topCfg.coreCfgs(i).busAddrBits,
-      deviceWidths = Seq(4,4) // NOC width=4 and Uart width = 4
+      deviceWidths = Seq(4) // Uart width = 4
     ))
   }
 
   // NoC with n ports
-  val noc = Module(new S4NoCTopWB(Config(4, 2, 2, 2, 32)))
-  noc.io.wbPorts.map(_.setDefaults)
-
+  val noc = Module(new S4NoC(Config(4, 2, 2, 2, 32)))
 
   // Termination and printing logic (just for simulation)
   val regCoreDone = RegInit(VecInit(Seq.fill(topCfg.nCores)(false.B)))
@@ -54,15 +52,13 @@ class Top(topCfg: TopConfig) extends Module {
     cores(i).io.int_exts.foreach(_ := false.B)
     // Connect to wbM master
     cores(i).io.bus <> wbMasters(i).busIO
+    cores(i).io.noc <> noc.io(i)
 
     // Connect WbMaster to WbBus
     wbMasters(i).wbIO <> wbBuses(i).io.wbMaster
 
-    // Connect WbBus to NOC
-    wbBuses(i).io.wbDevices(0) <> noc.io.wbPorts(i)
-
     // Connect WbBus to Uart
-    wbBuses(i).io.wbDevices(1) <> wbUarts(i).io.port
+    wbBuses(i).io.wbDevices(0) <> wbUarts(i).io.port
 
     // Connect all cores to uart input
     wbUarts(i).ioUart.rx := io.uart.rx
@@ -80,7 +76,7 @@ class Top(topCfg: TopConfig) extends Module {
       }
       regCoreDone(i) := true.B
     }
-    
+
     // Handle printfs
     when(cores(i).io.host.to_host === "hbaaabaaa".U) {
       regCorePrintNext(i) := true.B

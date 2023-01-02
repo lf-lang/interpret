@@ -1,5 +1,5 @@
 build:
-	riscv_compile.sh ispm noc_latency.c
+	riscv_compile.sh ispm low_level_interface_noc.c
 
 clean:
 	riscv_clean.sh
