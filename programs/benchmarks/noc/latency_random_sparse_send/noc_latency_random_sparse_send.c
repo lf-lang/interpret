@@ -1,3 +1,12 @@
+/**
+ * This benchmark aims to capture the full range of variability in the latency of sending a single
+ * word. It does this by randomizing the time at which the word is sent so that at the moment of
+ * message arrival, the position of the receiver in its busy-wait loop should be variable.
+ *
+ * It also uses a large minimum spacing between sending messages to ensure that the receiver is
+ * completely finished handling the previous message before the next message arrives.
+ */
+
 #include <stdint.h>
 #include <flexpret_io.h>
 #include <flexpret_noc.h>
