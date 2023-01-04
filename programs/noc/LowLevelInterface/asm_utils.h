@@ -2,7 +2,7 @@
 #define ASM_UTILS_H
 
 /**
- * @brief Pure assembly version of _fp_print.
+ * @brief Pure assembly version of _fp_print. Executes in 4 cycles.
  */
 #define FP_PRINT_ASM(reg, clobber0) \
     "li " #clobber0 ", 0xbaaabaaa\n\t"                                                             \

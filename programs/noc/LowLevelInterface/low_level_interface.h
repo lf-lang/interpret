@@ -56,19 +56,20 @@
     LOAD_NOC_BASE_ADDRESS(noc_base_address)                                                        \
     "slli " #read_to_reg ", " #sending_core_reg ", 2\n\t"                                          \
     "add " #noc_base_address ", " #read_to_reg ", " #noc_base_address "\n\t"                       \
-    "POLL" #nonce ": lw " #read_to_reg ", 16(" #noc_base_address ")\n\t"                           \
-    "beq x0, " #read_to_reg ", POLL" #nonce "\n\t"                                                 \
+    "BLOCKING_READ_POLL" #nonce ": lw " #read_to_reg ", 16(" #noc_base_address ")\n\t"                           \
+    "beq x0, " #read_to_reg ", BLOCKING_READ_POLL" #nonce "\n\t"                                                 \
     "lw " #read_to_reg ", 0(" #noc_base_address ")\n\t"
 
-/* Helper to SEND_N_WORDS. Accumulates valid bits. */
+/** Helper to SEND_N_WORDS. Accumulates valid bits. */
 #define OR_VALIDITY_OF_NOC_DATA(noc_base_address_reg, accumulator_reg, offset_literal, clobber0) \
-    "lw " #clobber0 ", " offset_literal "(" #noc_base_address_reg ")\n\t" \
-    "or " #accumulator_reg ", " #accumulator_reg ", " #clobber0 "\n\t" \
+    "lw " #clobber0 ", " #offset_literal "(" #noc_base_address_reg ")\n\t" \
+    "or " #accumulator_reg ", " #accumulator_reg ", " #clobber0 "\n\t"
 
-#define READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce, noc_base_address_reg, read_to_reg, sending_core_reg, result_reg, tag_bit_mask) \
-    BLOCKING_READ(nonce, clobber0, read_to_reg, x0) \
-    "andi " #result_reg ", " #read_to_reg ", " #tag_bit_mask "\n\t" /* check tag bit */ \
-    "bnez " #result_reg ", END" #nonce "\n\t" \
+/** Helper to SEND_N_WORDS. */
+#define READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce, noc_base_address_reg, read_to_reg, sending_core_reg, result_reg, tag_bit_mask, fail_label) \
+    BLOCKING_READ(nonce, noc_base_address_reg, read_to_reg, sending_core_reg) \
+    "and " #result_reg ", " #read_to_reg ", " #tag_bit_mask "\n\t" /* check tag bit */ \
+    "bnez " #result_reg ", " #fail_label "\n\t"
 
 /**
  * @brief Try to send the number of words specified by n_words_reg.
@@ -84,6 +85,9 @@
  * synchronization.
  * @param TIMES_TO_REPEAT_SEND_WORDS_ASM Macro that repeats send_words_asm an appropriate number of
  * times.
+ * @param noc_base_address Register that will hold the NoC base address. No assumptions are made
+ * about the original value held in this register (the NoC base address will be written into it
+ * regardless).
  * The remaining parameters (e.g., SENDING_NORTHEAST_MACRO) must be either TRUE_MACRO or
  * FALSE_MACRO.
  */
@@ -100,30 +104,30 @@
     SENDING_TO_THREE_MACRO,                                                                        \
     load_words_asm,                                                                                \
     send_words_asm,                                                                                \
-    TIMES_TO_REPEAT_SEND_WORDS_ASM,                                                                \
-    clobber0, clobber1, clobber2, clobber3, clobber4)                                              \
-    LOAD_NOC_BASE_ADDRESS(clobber0) \
+    noc_base_address, clobber1, clobber2, clobber3, clobber4 \
+)                                      \
+    LOAD_NOC_BASE_ADDRESS(noc_base_address) \
     "add " #result_reg ", x0, x0\n\t"  \
-    SENDING_TO_ZERO_MACRO(OR_VALIDITY_OF_NOC_DATA(clobber0, result_reg, 16, clobber1), "") \
-    SENDING_TO_ONE_MACRO(OR_VALIDITY_OF_NOC_DATA(clobber0, result_reg, 20, clobber1), "") \
-    SENDING_TO_TWO_MACRO(OR_VALIDITY_OF_NOC_DATA(clobber0, result_reg, 24, clobber1), "") \
-    SENDING_TO_THREE_MACRO(OR_VALIDITY_OF_NOC_DATA(clobber0, result_reg, 28, clobber1), "") \
-    "bnez " #result_reg ", END" #nonce "\n\t" /** Fail with error code 1 */ \
-    SYNC5(nonce, clobber0, clobber1, clobber2, clobber3, clobber4) \
+    SENDING_TO_ZERO_MACRO(OR_VALIDITY_OF_NOC_DATA(noc_base_address, result_reg, 16, clobber1), "") \
+    SENDING_TO_ONE_MACRO(OR_VALIDITY_OF_NOC_DATA(noc_base_address, result_reg, 20, clobber1), "") \
+    SENDING_TO_TWO_MACRO(OR_VALIDITY_OF_NOC_DATA(noc_base_address, result_reg, 24, clobber1), "") \
+    SENDING_TO_THREE_MACRO(OR_VALIDITY_OF_NOC_DATA(noc_base_address, result_reg, 28, clobber1), "") \
+    "bnez " #result_reg ", END_SEND_N_WORDS" #nonce "\n\t" /** Fail with error code 1 */ \
+    SYNC5(nonce ## 0, noc_base_address, clobber1, clobber2, clobber3, clobber4) \
     "li " #clobber1 ", 0x80000000\n\t" /* Set the top bit as a tag bit. If u wanna send so many words that this creates amiguity, then u have a bigger problem on your hands */ \
-    "ori " #n_words_reg ", " #n_words_reg ", " #clobber1 "\n\t" \
-    SENDING_NORTH_MACRO("sw " #n_words_reg ", 0(" #clobber0 ")\n\t", "nop\n\t") \
-    SENDING_EAST_MACRO("sw " #n_words_reg ", 0(" #clobber0 ")\n\t", "nop\n\t") \
+    "or " #n_words_reg ", " #n_words_reg ", " #clobber1 "\n\t" \
+    SENDING_NORTH_MACRO("sw " #n_words_reg ", 0(" #noc_base_address ")\n\t", "nop\n\t") \
+    SENDING_EAST_MACRO("sw " #n_words_reg ", 0(" #noc_base_address ")\n\t", "nop\n\t") \
     "li " #clobber3 ", 1\n\t" \
-    SENDING_NORTHEAST_MACRO("sw " #n_words_reg ", 0(" #clobber0 ")\n\t", "nop\n\t") \
-    SENDING_TO_ZERO_MACRO(READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce, clobber0, clobber2, x0, result_reg, clobber1), "") \
-    SENDING_TO_ONE_MACRO(READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce, clobber0, clobber2, clobber3, result_reg, clobber1), "") \
+    SENDING_NORTHEAST_MACRO("sw " #n_words_reg ", 0(" #noc_base_address ")\n\t", "nop\n\t") \
+    SENDING_TO_ZERO_MACRO(READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce ## 0, noc_base_address, clobber2, x0, result_reg, clobber1, END_SEND_N_WORDS ## nonce), "") \
+    SENDING_TO_ONE_MACRO(READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce ## 1, noc_base_address, clobber2, clobber3, result_reg, clobber1, END_SEND_N_WORDS ## nonce), "") \
     "li " #clobber3 ", 2\n\t" \
-    SENDING_TO_TWO_MACRO(READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce, clobber0, clobber2, clobber3, result_reg, clobber1), "") \
+    SENDING_TO_TWO_MACRO(READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce ## 2, noc_base_address, clobber2, clobber3, result_reg, clobber1, END_SEND_N_WORDS ## nonce), "") \
     "li " #clobber3 ", 3\n\t" \
-    SENDING_TO_THREE_MACRO(READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce, clobber0, clobber2, clobber3, result_reg, clobber1), "") \
+    SENDING_TO_THREE_MACRO(READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce ## 3, noc_base_address, clobber2, clobber3, result_reg, clobber1, END_SEND_N_WORDS ## nonce), "") \
     /* At this point, all prospective message receivers have agreed that they are ready to receive the given number of words by replying using responses that have zero as their tag bit. By my count the TDM slot of the next instruction will be -2 mod 5, but for now I won't use that fact, preferring instead to re-synchronize, just to make the assembly easier to write (less brittle, less performant). */ \
-    #load_words_asm \
-    SYNC5(nonce, clobber0, clobber1, clobber2, clobber3, clobber4) \
-    #TIMES_TO_REPEAT_SEND_WORDS_ASM(send_words_asm) \
-    "END" #nonce ":\n\t"
+    load_words_asm \
+    SYNC5(nonce ## 1, noc_base_address, clobber1, clobber2, clobber3, clobber4) \
+    send_words_asm \
+    "END_SEND_N_WORDS" #nonce ": nop\n\t"
