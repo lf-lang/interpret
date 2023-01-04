@@ -9,18 +9,29 @@
 #define EAST 4
 #define PERIOD 20
 
+/***********************
+ * core 0 / N \ core 1 *
+ *        W + E        *
+ * core 2 \ S / core 3 *
+ ***********************/
+
 int main0();
 int main1();
 int main2();
 int main3();
 
 #define REPEAT64(x) REPEAT4(REPEAT4(REPEAT4(x)))
-#define BROADCAST_COUNT_SEND_ASM(nonce, n_words_reg, noc_base_address) REPEAT64( \
+#define BROADCAST_COUNT_SEND_ASM(nonce, n_words_reg, noc_base_address, clobber0) REPEAT64( \
     "sw " #n_words_reg ", 0(" #noc_base_address ")\n\t" \
-    "addi " #n_words_reg ", " #n_words_reg ", -1\n\t" \
+    "addi " #clobber0 ", " #n_words_reg ", -1\n\t" \
     "sw " #n_words_reg ", 0(" #noc_base_address ")\n\t" \
     "sw " #n_words_reg ", 0(" #noc_base_address ")\n\t" \
-    "beqz " #n_words_reg ", END_BROADCAST_COUNT_FROM_CORE_ZERO\n\t" \
+    "blt " #clobber0 ", x0, END_BROADCAST_COUNT_FROM_CORE_ZERO\n\t" \
+    "sw " #clobber0 ", 0(" #noc_base_address ")\n\t" \
+    "addi " #n_words_reg ", " #clobber0 ", -1\n\t" \
+    "sw " #clobber0 ", 0(" #noc_base_address ")\n\t" \
+    "sw " #clobber0 ", 0(" #noc_base_address ")\n\t" \
+    "blt " #n_words_reg ", x0, END_BROADCAST_COUNT_FROM_CORE_ZERO\n\t" \
 )
 #define BROADCAST_COUNT_LOAD_ASM(n_words_reg) "andi " #n_words_reg ", " #n_words_reg ", 15\n\t"
 // #define BROADCAST_COUNT_LOAD_ASM "andi t0, t0, 15\n\t"
@@ -34,7 +45,7 @@ int main3();
         TRUE_MACRO, TRUE_MACRO, TRUE_MACRO, \
         FALSE_MACRO, TRUE_MACRO, TRUE_MACRO, TRUE_MACRO, \
         BROADCAST_COUNT_LOAD_ASM(n_words_reg), \
-        BROADCAST_COUNT_SEND_ASM(nonce, n_words_reg, noc_base_address), \
+        BROADCAST_COUNT_SEND_ASM(nonce, n_words_reg, noc_base_address, clobber1), \
         noc_base_address, clobber1, clobber2, clobber3, clobber4 \
     ) \
     "END_BROADCAST_COUNT_FROM_CORE_ZERO:"
@@ -52,6 +63,7 @@ int main() {
 
 int main0(uint32_t direction) {
     asm volatile(
+
         "li t0, 7\n\t"
         // Let t1 be result reg
         // Let t2 be noc_base_address
@@ -63,7 +75,7 @@ int main1() {
     asm volatile(
         BLOCKING_READ(0, t4, t2, x0)
         "andi t2, t2, 1023\n\t"
-        FP_PRINT_ASM(t2, a0)
+        "li a0, 0xbaaabaaa\n\t"
         SYNC5(67, t4, a1, a2, a3, a4)
         "nop\n\t"
         "nop\n\t"
@@ -102,7 +114,7 @@ int main2() {
     asm volatile(
         BLOCKING_READ(00, t4, t2, x0)
         "andi t2, t2, 1023\n\t"
-        FP_PRINT_ASM(t2, a0)
+        "li a0, 0xbaaabaaa\n\t"
         SYNC5(106, t4, a1, a2, a3, a4)
         "nop\n\t"
         "nop\n\t"
@@ -135,14 +147,13 @@ int main2() {
         "lw t2, 0(t4)\n\t"
         "nop\n\t"
     );
-
 }
 
 int main3() {
     asm volatile(
         BLOCKING_READ(000, t4, t2, x0)
         "andi t2, t2, 1023\n\t"
-        FP_PRINT_ASM(t2, a0)
+        "li a0, 0xbaaabaaa\n\t"
         SYNC5(146, t4, a1, a2, a3, a4)
         "sw t2, 0(t4)\n\t"
         "nop\n\t"

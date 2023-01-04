@@ -46,19 +46,32 @@
     SEND_NORTHEAST_SYNCED_WITH_INSTRUCTIONS(nonce, noc_base_address, reg, "nop\n\t", "nop\n\t", "nop\n\t", "nop\n\t")
 
 /**
+ * @brief Load the NoC base address corresponding to the value of sending_core_reg into
+ * noc_core_base_address.
+ * @param noc_core_base_address Output: The address of data sent from the given core.
+ * @param sending_core_reg Input (preserved): The number of the sending core. This register is not
+ * clobbered so that the optimization of passing in x0 for it can be used.
+ */
+#define LOAD_NOC_CORE_BASE_ADDRESS(noc_core_base_address, sending_core_reg, clobber0) \
+    LOAD_NOC_BASE_ADDRESS(noc_core_base_address)                                                        \
+    "slli " #clobber0 ", " #sending_core_reg ", 2\n\t"                                             \
+    "add " #noc_core_base_address ", " #clobber0 ", " #noc_core_base_address "\n\t"
+
+#define BLOCK_ON_FLIT_FROM_CORE(nonce, noc_core_base_address, clobber0) \
+    "BLOCKING_READ_POLL" #nonce ": lw " #clobber0 ", 16(" #noc_core_base_address ")\n\t"           \
+    "beq x0, " #clobber0 ", BLOCKING_READ_POLL" #nonce "\n\t"                                      \
+
+/**
  * @brief Do a blocking read of the message from the core at sending_core_reg.
  * Set noc_base_address to the base address corresponding to sending_core_reg.
  * Preserve the value of sending_core_reg.
  * When run on a FlexPRET core with a single thread, this is guaranteed to take three cycles
  * (mod 5).
  */
-#define BLOCKING_READ(nonce, noc_base_address, read_to_reg, sending_core_reg) \
-    LOAD_NOC_BASE_ADDRESS(noc_base_address)                                                        \
-    "slli " #read_to_reg ", " #sending_core_reg ", 2\n\t"                                          \
-    "add " #noc_base_address ", " #read_to_reg ", " #noc_base_address "\n\t"                       \
-    "BLOCKING_READ_POLL" #nonce ": lw " #read_to_reg ", 16(" #noc_base_address ")\n\t"                           \
-    "beq x0, " #read_to_reg ", BLOCKING_READ_POLL" #nonce "\n\t"                                                 \
-    "lw " #read_to_reg ", 0(" #noc_base_address ")\n\t"
+#define BLOCKING_READ(nonce, noc_core_base_address, read_to_reg, sending_core_reg) \
+    LOAD_NOC_CORE_BASE_ADDRESS(noc_core_base_address, sending_core_reg, read_to_reg)                    \
+    BLOCK_ON_FLIT_FROM_CORE(nonce, noc_core_base_address, read_to_reg) \
+    "lw " #read_to_reg ", 0(" #noc_core_base_address ")\n\t"
 
 /** Helper to SEND_N_WORDS. Accumulates valid bits. */
 #define OR_VALIDITY_OF_NOC_DATA(noc_base_address_reg, accumulator_reg, offset_literal, clobber0) \
@@ -131,3 +144,13 @@
     SYNC5(nonce ## 1, noc_base_address, clobber1, clobber2, clobber3, clobber4) \
     send_words_asm \
     "END_SEND_N_WORDS" #nonce ": nop\n\t"
+
+// #define READ_N_WORDS( \
+//     nonce, \
+//     sending_core_reg, \
+//     prepare_receive_words_asm, \
+//     receive_words_asm, \
+//     noc_base_address, clobber0, clobber1, clobber2, clobber3, clobber4 \
+// ) \
+//     BLOCKING_READ(nonce ## 1, noc_base_address, clobber0, sending_core_reg) \
+//     SYNC5(nonce ## 2, noc_base_address, )
