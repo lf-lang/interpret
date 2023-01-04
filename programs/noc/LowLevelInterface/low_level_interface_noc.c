@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <flexpret_io.h>
 
+#include "asm_utils.h"
 #include "low_level_interface.h"
 
 #define NORTHEAST 12
