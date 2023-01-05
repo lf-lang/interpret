@@ -1,5 +1,23 @@
 #include "asm_utils.h"
 
+#define NORTHEAST_QUINTET(asm2cycles, asm1cycle0, asm1cycle1, to_send_reg, noc_base_address_reg) \
+    "sw " #to_send_reg ", 0(" #noc_base_address_reg ")\n\t" \
+    asm2cycles \
+    asm1cycle0 \
+    asm1cycle1
+
+#define NORTH_QUINTET(asm2cycles, asm1cycle0, asm1cycle1, to_send_reg, noc_base_address_reg) \
+    asm2cycles \
+    "sw " #to_send_reg ", 0(" #noc_base_address_reg ")\n\t" \
+    asm1cycle0 \
+    asm1cycle1
+
+#define EAST_QUINTET(asm2cycles, asm1cycle0, asm1cycle1, to_send_reg, noc_base_address_reg) \
+    asm2cycles \
+    asm1cycle0 \
+    "sw " #to_send_reg ", 0(" #noc_base_address_reg ")\n\t" \
+    asm1cycle1
+
 #define LOAD_NOC_BASE_ADDRESS(reg) "li " #reg ", 0x80000000\n\t"
 
 /**
@@ -57,16 +75,16 @@
     "slli " #clobber0 ", " #sending_core_reg ", 2\n\t"                                             \
     "add " #noc_core_base_address ", " #clobber0 ", " #noc_core_base_address "\n\t"
 
-#define BLOCK_ON_FLIT_FROM_CORE(nonce, noc_core_base_address, clobber0) \
+#define BLOCK_ON_FLIT_FROM_CORE(nonce, noc_core_base_address, clobber0) BLOCK_ON_FLIT_FROM_CORE__(nonce, noc_core_base_address, clobber0) // This indirection is necessary for the preprocessor to expand the macro arg __LINE__. :eye_roll:
+#define BLOCK_ON_FLIT_FROM_CORE__(nonce, noc_core_base_address, clobber0) \
     "BLOCKING_READ_POLL" #nonce ": lw " #clobber0 ", 16(" #noc_core_base_address ")\n\t"           \
     "beq x0, " #clobber0 ", BLOCKING_READ_POLL" #nonce "\n\t"                                      \
 
 /**
  * @brief Do a blocking read of the message from the core at sending_core_reg.
- * Set noc_base_address to the base address corresponding to sending_core_reg.
- * Preserve the value of sending_core_reg.
- * When run on a FlexPRET core with a single thread, this is guaranteed to take three cycles
- * (mod 5).
+ * @param noc_core_base_address Output: The base address corresponding to sending_core_reg.
+ * @param read_to_reg Output: The result of the blocking read.
+ * @param sending_core_reg Input (preserved): The number of the sending core.
  */
 #define BLOCKING_READ(nonce, noc_core_base_address, read_to_reg, sending_core_reg) \
     LOAD_NOC_CORE_BASE_ADDRESS(noc_core_base_address, sending_core_reg, read_to_reg)                    \
