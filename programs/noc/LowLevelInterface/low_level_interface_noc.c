@@ -23,12 +23,12 @@ int main3();
     "addi " #clobber0 ", " #n_words_reg ", -1\n\t"                                                 \
     "sw " #n_words_reg ", 0(" #noc_base_address ")\n\t"                                            \
     "sw " #n_words_reg ", 0(" #noc_base_address ")\n\t"                                            \
-    "blt " #clobber0 ", x0, END_BROADCAST_COUNT_FROM_CORE_ZERO\n\t"                                \
+    "bge x0, " #clobber0 ", END_BROADCAST_COUNT_FROM_CORE_ZERO\n\t"                                \
     "sw " #clobber0 ", 0(" #noc_base_address ")\n\t"                                               \
     "addi " #n_words_reg ", " #clobber0 ", -1\n\t"                                                 \
     "sw " #clobber0 ", 0(" #noc_base_address ")\n\t"                                               \
     "sw " #clobber0 ", 0(" #noc_base_address ")\n\t"                                               \
-    "blt " #n_words_reg ", x0, END_BROADCAST_COUNT_FROM_CORE_ZERO\n\t"                             \
+    "bge x0, " #n_words_reg ", END_BROADCAST_COUNT_FROM_CORE_ZERO\n\t"                             \
 )
 #define BROADCAST_COUNT_LOAD_ASM(n_words_reg) "andi " #n_words_reg ", " #n_words_reg ", 15\n\t"
 
@@ -46,16 +46,19 @@ int main3();
     )                                                                                              \
     "END_BROADCAST_COUNT_FROM_CORE_ZERO:"
 
-#define RECEIVER_BODY(endlabel) REPEAT7( \
-    "lw t2, 0(t4)\n\t" /* t4 has the base address for the noc */                                   \
-    "rdcycle t0\n\t"                                                                               \
-    "bge t0, t3, " #endlabel "\n\t"                                                                \
-    "csrw 0x51e, a0\n\t"                                                                           \
-    "lw t2, 0(t4)\n\t" /* t4 has the base address for the noc */                                   \
-    "rdcycle t0\n\t"                                                                               \
-    "bge t0, t3, " #endlabel "\n\t"                                                                \
-    "csrw 0x51e, t2\n\t"                                                                           \
-)
+#define RECEIVER_BODY REPEAT2(REPEAT4(REPEAT4(                                                     \
+        "lw t2, 0(t4)\n\t" /* t4 has the base address for the noc */                               \
+        "rdcycle t0\n\t"                                                                           \
+        "csrw 0x51e, a0\n\t"                                                                       \
+        "csrw 0x51e, t2\n\t"                                                                       \
+    )))                                                                                            \
+    REPEAT2(REPEAT4(REPEAT4(                                                                       \
+        "lw t2, 0(t4)\n\t" /* t4 has the base address for the noc */                               \
+        "li t0, 42\n\t"                                                                            \
+        "csrw 0x51e, a0\n\t"                                                                       \
+        "csrw 0x51e, t0\n\t"                                                                       \
+    )))                                                                                            \
+
 
 int main() {
     int core_id = read_csr(CSR_COREID);
@@ -70,7 +73,6 @@ int main() {
 
 int main0() {
     asm volatile(
-
         "li t0, 7\n\t"
         // Let t1 be result reg
         // Let t2 be noc_base_address
@@ -80,60 +82,21 @@ int main0() {
 
 int main1() {
     asm volatile(
-        BLOCKING_READ(0, t4, t2, x0)
-        "andi t2, t2, 1023\n\t"
         "li a0, 0xbaaabaaa\n\t"
-        SYNC5(67, t4, a1, a2, a3, a4)
-        EAST_QUINTET(
-            "slli t3, t2, 2\n\t" "add t3, t3, t2\n\t", /* multiplying by 5 */
-            "nop\n\t",
-            "nop\n\t",
-            t2,
-            t4
-        )
-        BLOCK_ON_FLIT_FROM_CORE(__LINE__, t4, t2)
-        "rdcycle t2\n\t"
-        "add t3, t2, t3\n\t" // end cycle
-        RECEIVER_BODY(END_MAIN1)
-        "END_MAIN1:"
+        READ_N_WORDS(__LINE__, EAST_QUINTET, MUL4, 48, 434, x0, RECEIVER_BODY, t4, t5, a1, a2, a3)
     );
 }
 
 int main2() {
     asm volatile(
-        BLOCKING_READ(00, t4, t2, x0)
-        "andi t2, t2, 1023\n\t"
         "li a0, 0xbaaabaaa\n\t"
-        SYNC5(106, t4, a1, a2, a3, a4)
-        "nop\n\t"
-        "nop\n\t"
-        "sw t2, 0(t4)\n\t"
-        "nop\n\t"
-        "nop\n\t"
-        BLOCK_ON_FLIT_FROM_CORE(__LINE__, t4, t2)
-        "nop\n\t"
-        "nop\n\t"
-        RECEIVER_BODY(END_MAIN2)
-        "END_MAIN2:"
+        READ_N_WORDS(__LINE__, NORTH_QUINTET, MUL4, 48, 434, x0, RECEIVER_BODY, t4, t5, a1, a2, a3)
     );
 }
 
 int main3() {
     asm volatile(
-        BLOCKING_READ(000, t4, t2, x0)
-        "andi t2, t2, 1023\n\t"
         "li a0, 0xbaaabaaa\n\t"
-        SYNC5(146, t4, a1, a2, a3, a4)
-        "sw t2, 0(t4)\n\t"
-        "nop\n\t"
-        "nop\n\t"
-        "nop\n\t"
-        "nop\n\t"
-        BLOCK_ON_FLIT_FROM_CORE(__LINE__, t4, t2)
-        "nop\n\t"
-        "nop\n\t"
-        RECEIVER_BODY(END_MAIN3)
-        "END_MAIN3:"
+        READ_N_WORDS(__LINE__, NORTHEAST_QUINTET, MUL4, 48, 434, x0, RECEIVER_BODY, t4, t5, a1, a2, a3)
     );
-
 }

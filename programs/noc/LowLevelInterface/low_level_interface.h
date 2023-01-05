@@ -21,13 +21,11 @@
 #define LOAD_NOC_BASE_ADDRESS(reg) "li " #reg ", 0x80000000\n\t"
 
 /**
- * @brief The same as SYNC5, except with the opportunity to pack one extra single-cycle instruction
- * in.
- * @param instr An instruction (presumably unrelated to the behavior of SYNC5) that does not clobber
- * clobber1, clobber2, or clobber3, but that is permitted to clobber clobber0. This instruction must
- * execute in exactly one cycle.
+ * @brief The instruction immediately following SYNC5 is able to store a word into the zeroth TDM
+ * slot (northwest) in a single-threaded setting. Clobber the given registers.
+ * It 9-13 cycles to synchronize. The 0-4 is fundamental and the remaining 9 cycles are overhead.
  */
-#define SYNC5_PACKED(nonce, noc_base_address, clobber0, clobber1, clobber2, clobber3, extra_instr) \
+#define SYNC5(nonce, noc_base_address, clobber0, clobber1, clobber2, clobber3)                     \
     "li " #clobber0 ", 1\n\t"                                                                      \
     "li " #clobber1 ", 2\n\t"                                                                      \
     "li " #clobber2 ", 3\n\t"                                                                      \
@@ -35,18 +33,10 @@
     "lw " #clobber3 ", 32(" #noc_base_address ")\n\t"  /* Get elapsed cycles mod period */         \
     "beq " #clobber3 ", " #clobber0 ", DONE_SYNCHRONIZING" #nonce "\n\t"                           \
     "beq " #clobber3 ", x0, DONE_SYNCHRONIZING" #nonce "\n\t"                                      \
-    extra_instr                                                                                    \
+    "nop\n\t"                                                                                      \
     "beq " #clobber3 ", " #clobber2 ", DONE_SYNCHRONIZING" #nonce "\n\t"                           \
     "beq " #clobber3 ", " #clobber1 ", DONE_SYNCHRONIZING" #nonce "\n\t"                           \
     "DONE_SYNCHRONIZING" #nonce ":\n\t"
-
-/**
- * @brief The instruction immediately following SYNC5 is able to store a word into the zeroth TDM
- * slot (northwest) in a single-threaded setting. Clobber the given registers.
- * It 9-13 cycles to synchronize. The 0-4 is fundamental and the remaining 9 cycles are overhead.
- */
-#define SYNC5(nonce, noc_base_address, clobber0, clobber1, clobber2, clobber3)                     \
-    SYNC5_PACKED(nonce, noc_base_address, clobber0, clobber1, clobber2, clobber3, "nop\n\t")
 
 /**
  * @brief Broadcast the value stored in reg to all other cores. The instruction immediately
@@ -170,60 +160,83 @@
     /* At this point, all prospective message receivers have agreed that they are ready to receive the given number of words by replying using responses that have zero as their tag bit. By my count the TDM slot of the next instruction will be -2 mod 5, but for now I won't use that fact, preferring instead to re-synchronize, just to make the assembly easier to write (less brittle, less performant). */ \
     load_words_asm \
     SYNC5(nonce ## 1, noc_base_address, clobber1, clobber2, clobber3, clobber4) \
+    /* The following 5 cycles are spent to break the receivers from their polling loop. */ \
+    SENDING_NORTHEAST_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
+    "nop\n\t" \
+    SENDING_NORTH_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
+    SENDING_EAST_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
+    "nop\n\t" \
     send_words_asm \
     "END_SEND_N_WORDS" #nonce ": nop\n\t"
-
-#define MUL4_2CYCLES_2INSTRS(in_reg, out_reg) \
-    MUL4(in_reg, out_reg) "nop\n\t"
-
-#define MUL5_2CYCLES_2INSTRS(in_reg, out_reg) MUL5(in_reg, out_reg)
 
 /**
  * @brief Read the number of words specified by the sender.
  * @param DIRECTION_QUINTET_MACRO The macro corresponding to the direction of the sender from the
  * receiver.
- * @param MUL_BY_RECEIVE_WORDS_PERIOD_2CYCLES_2INSTRS Assembly consisting of two instructions that
- * takes an in_reg and an out_reg and sets the out_reg to the number of instructions in each 5-cycle
- * subsequence of receive_words_asm. See MUL4_2CYCLES_2INSTRS, MUL5_2CYCLES_2INSTRS for examples.
- * @param preparatory_asm_4cycles Assembly taking 4 cycles that may prepare for the
- * receive_words_asm that follows. The number of instructions used (not just cycles) matters!
- * @param offset_numeric_literal 28 plus (4 times the number of instructions in
- * preparatory_asm_4cycles). This will be 44 unless the 4-cycle sequence includes instructions that
+ * @param MUL_BY_RECEIVE_WORDS_PERIOD Assembly that takes an in_reg and an out_reg and sets the
+ * out_reg to the number of instructions in each 5-cycle subsequence of receive_words_asm.
+ * @param offset_numeric_literal 36 plus (4 times the number of instructions in
+ * preparatory asm). This will be 48 unless one provides instructions that
  * cause stalls, such as loads, branches, or jumps.
+ * @param hex_for_12_bit_distance_from_auipc_to_end 3-digit hex (no 0x prefix) for
+ * offset_numeric_literal plus the offset of receive_words_asm.
  * @param sending_core_reg Input: A register specifying the sending core.
  * @param receive_words_asm Assembly that receives the sent words. Must read in its first cycle, and
  * exactly every 5 cycles thereafter!
  * @param noc_base_address Output: A register that will be set to the base address of the NoC
  * corresponding to the given core.
+ * The remaining registers are all clobbers -- they have descriptive names, but they are not really
+ * API except insofar as they are clobbered.
  */
 #define READ_N_WORDS(                                                                              \
     nonce,                                                                                         \
     DIRECTION_QUINTET_MACRO,                                                                       \
-    MUL_BY_RECEIVE_WORDS_PERIOD_2CYCLES_2INSTRS,                                                   \
-    preparatory_asm_4cycles,                                                                       \
+    MUL_BY_RECEIVE_WORDS_PERIOD,                                                                   \
     offset_numeric_literal,                                                                        \
+    hex_for_12_bit_distance_from_auipc_to_end,                                                     \
     sending_core_reg,                                                                              \
     receive_words_asm,                                                                             \
-    noc_base_address, clobber0, clobber1, clobber2, clobber3, clobber4                             \
+    noc_base_address, packet_size_reg, jalr_word_reg, replaced_instruction_reg, clobber4           \
+) READ_N_WORDS__(                                                                                  \
+    nonce,                                                                                         \
+    DIRECTION_QUINTET_MACRO,                                                                       \
+    MUL_BY_RECEIVE_WORDS_PERIOD,                                                                   \
+    offset_numeric_literal,                                                                        \
+    hex_for_12_bit_distance_from_auipc_to_end,                                                     \
+    sending_core_reg,                                                                              \
+    receive_words_asm,                                                                             \
+    noc_base_address, packet_size_reg, jalr_word_reg, replaced_instruction_reg, clobber4           \
+)
+
+#define READ_N_WORDS__(                                                                              \
+    nonce,                                                                                         \
+    DIRECTION_QUINTET_MACRO,                                                                       \
+    MUL_BY_RECEIVE_WORDS_PERIOD,                                                                   \
+    offset_numeric_literal,                                                                        \
+    hex_for_12_bit_distance_from_auipc_to_end,                                                     \
+    sending_core_reg,                                                                              \
+    receive_words_asm,                                                                             \
+    noc_base_address, packet_size_reg, jalr_word_reg, replaced_instruction_reg, clobber4           \
 )                                                                                                  \
-    BLOCKING_READ(nonce ## 1, noc_base_address, clobber0, sending_core_reg)                        \
-    /* "andi " #clobber0 ", " #clobber0 ", 1023\n\t" /* 1023 is the largest 12-bit number that doesn't sign-extend to have a 1 in its top bit */ \
-    MUL_BY_RECEIVE_WORDS_PERIOD_2CYCLES_2INSTRS(clobber0, clobber0) \
-    SYNC5_PACKED(nonce ## 2, noc_base_address, clobber1, clobber2, clobber3, clobber4, "slli " #clobber0 ", " #clobber0 ", 2\n\t") \
-    "jal " #clobber1 ", CONTINUING_READ_N_WORDS" #nonce "\n\t"                                     \
-    "jal x0, READ_N_WORDS_END" #nonce "\n\t" /* This instruction will not be executed in its present position. It's just here so we can copy it somewhere else. */                                             \
-    "CONTINUING_READ_N_WORDS" #nonce ":\n\t"                                                       \
-    "lw " #clobber2 ", 0(" #clobber1 ")\n\t" /* clobber2 := "jump to end" instruction */           \
-    "add " #clobber1 ", " #clobber1 ", " #clobber0 "\n\t"                                          \
-    preparatory_asm_4cycles                                                                        \
+    BLOCKING_READ(nonce ## 1, noc_base_address, clobber4, sending_core_reg)                 \
+    MUL_BY_RECEIVE_WORDS_PERIOD(clobber4, packet_size_reg) /* This kills the tag bit, as desired */ \
+    "slli " #packet_size_reg ", " #packet_size_reg ", 2\n\t"                                       \
+    SYNC5(nonce ## 2, noc_base_address, t6, jalr_word_reg, replaced_instruction_reg, clobber4)     \
+    "auipc t6, 0\n\t"                                                                              \
+    "add " #packet_size_reg ", t6, " #packet_size_reg "\n\t"                                                         \
+    "li " #jalr_word_reg ", 0x" #hex_for_12_bit_distance_from_auipc_to_end "F8067\n\t" /* This hardcodes a write to the address stored at t6 = x31 with the given offset. Note also that li is two instructions and takes two cycles. */ \
+    LOAD_NOC_BASE_ADDRESS(clobber4) /* It might be wise to preserve jalr_word_reg for use in a future iteration. t6 can also be preserved, although we will need to add/subtract from it, according to the new sub-packet length, presumably using a preserved value of packet_size_reg. */ \
     DIRECTION_QUINTET_MACRO(                                                                       \
-        "lw " #clobber3 ", " #offset_numeric_literal "(" #clobber1 ")\n\t", /* clobber3 := instruction to be replaced (receive_words_asm must not clobber clobber3!) */ \
-        "sw " #clobber2 ", " #offset_numeric_literal "(" #clobber1 ")\n\t",                        \
+        "lw " #replaced_instruction_reg ", 52(" #packet_size_reg ")\n\t", /* replaced_instruction_reg := instruction to be replaced (receive_words_asm must not clobber replaced_instruction_reg!) */ \
+        "sw " #jalr_word_reg ", 52(" #packet_size_reg ")\n\t",                                                       \
         "nop\n\t",                                                                                 \
-        clobber0,                                                                                  \
-        noc_base_address,                                                                          \
+        x0, /* It doesn't really matter what you send, as long as the tag bit is zero */ \
+        noc_base_address                                                                           \
     )                                                                                              \
+    BLOCK_ON_FLIT_FROM_CORE(nonce, noc_base_address, clobber4) /* 2 instructions, -2 cycles (mod 5) */ \
+    "nop\n\t"                                                                                      \
+    "nop\n\t"                                                                                      \
     receive_words_asm                                                                              \
     "READ_N_WORDS_END" #nonce ":\n\t"                                                              \
-    "sw " #clobber3 ", " #offset_numeric_literal "(" #clobber1 ")\n\t"  /* restore the modified imem entry */
+    "sw " #replaced_instruction_reg ", 52(t6)\n\t"  /* restore the modified imem entry */
 
