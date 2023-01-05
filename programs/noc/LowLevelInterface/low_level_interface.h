@@ -187,7 +187,7 @@
  * cause stalls, such as loads, branches, or jumps.
  * @param hex_for_12_bit_distance_from_auipc_to_end 3-digit hex (no 0x prefix) for
  * offset_numeric_literal plus the offset of receive_words_asm.
- * @param sending_core_reg Input: A register specifying the sending core.
+ * @param sending_core_reg Input: A register specifying the sending core. Clobbered.
  * @param receive_words_asm Assembly that receives the sent words. Must read in its first cycle, and
  * exactly every 5 cycles thereafter!
  * @param noc_base_address Output: A register that will be set to the base address of the NoC
@@ -229,11 +229,11 @@
     BLOCKING_READ(nonce ## 1, noc_base_address, clobber4, sending_core_reg)                 \
     MUL_BY_RECEIVE_WORDS_PERIOD(clobber4, packet_size_reg) /* This kills the tag bit, as desired */ \
     "slli " #packet_size_reg ", " #packet_size_reg ", 2\n\t"                                       \
-    SYNC5(nonce ## 2, noc_base_address, t6, jalr_word_reg, replaced_instruction_reg, clobber4)     \
+    SYNC5(nonce ## 2, sending_core_reg, t6, jalr_word_reg, replaced_instruction_reg, clobber4)     \
     "auipc t6, 0\n\t"                                                                              \
     "add " #packet_size_reg ", t6, " #packet_size_reg "\n\t"                                                         \
     "li " #jalr_word_reg ", 0x" #hex_for_12_bit_distance_from_auipc_to_end "F8067\n\t" /* This hardcodes a write to the address stored at t6 = x31 with the given offset. Note also that li is two instructions and takes two cycles. */ \
-    LOAD_NOC_BASE_ADDRESS(clobber4) /* It might be wise to preserve jalr_word_reg for use in a future iteration. t6 can also be preserved, although we will need to add/subtract from it, according to the new sub-packet length, presumably using a preserved value of packet_size_reg. */ \
+    "nop\n\t" /* It might be wise to preserve jalr_word_reg for use in a future iteration. t6 can also be preserved, although we will need to add/subtract from it, according to the new sub-packet length, presumably using a preserved value of packet_size_reg. */ \
     DIRECTION_QUINTET_MACRO(                                                                       \
         "lw " #replaced_instruction_reg ", 52(" #packet_size_reg ")\n\t", /* replaced_instruction_reg := instruction to be replaced (receive_words_asm must not clobber replaced_instruction_reg!) */ \
         "sw " #jalr_word_reg ", 52(" #packet_size_reg ")\n\t",                                                       \
