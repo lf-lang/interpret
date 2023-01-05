@@ -1,3 +1,6 @@
+#ifndef LOW_LEVEL_INTERFACE_H
+#define LOW_LEVEL_INTERFACE_H
+
 #include "asm_utils.h"
 
 #define NORTHEAST_INT 0
@@ -245,39 +248,4 @@
     "READ_N_WORDS_END" #nonce ":\n\t"                                                              \
     "sw " #replaced_instruction_reg ", 52(t6)\n\t"  /* restore the modified imem entry */
 
-#define LOAD_AND_PRINT_RECEIVER_BODY(noc_base_address, clobber0, clobber1) REPEAT64(               \
-    "lw " #clobber0 ", 0(" #noc_base_address ")\n\t" /* t4 has the base address for the noc */     \
-    "nop\n\t"                                                                                      \
-    "csrw 0x51e, " #clobber1 "\n\t"                                                                \
-    "csrw 0x51e, " #clobber0 "\n\t"                                                                \
-) "nop\n\t" /* Do not let the code self-modification kill a line that we actually need in the special case that the packet length is exactly 64. */
-
-/**
- * @brief Block and print up to 64 words that were sent by another core using the protocol of
- * SEND_N_WORDS.
- * @param DIRECTION_QUINTET_MACRO The macro corresponding to the direction of the sender from the
- * receiver.
- * @param sender_reg A register containing the core ID of the sender.
- * The remaining registers are all clobbers.
- */
-#define READ_N_WORDS_AND_PRINT(nonce, DIRECTION_QUINTET_MACRO, sender_reg, clobber0, clobber1, clobber2, clobber3, clobber4, clobber5) \
-    READ_N_WORDS(nonce, DIRECTION_QUINTET_MACRO, MUL4, 48, 438, sender_reg, LOAD_AND_PRINT_RECEIVER_BODY(clobber0, clobber4, clobber5), clobber0, clobber1, clobber2, clobber3, clobber4)
-
-#define READ_N_WORDS_AND_PRINT_HELPER(DIRECTION_QUINTET_MACRO)                                     \
-    asm volatile(                                                                                  \
-        "li a4, 0xbaaabaaa\n\t"                                                                    \
-        READ_N_WORDS_AND_PRINT(__LINE__, DIRECTION_QUINTET_MACRO, %[sender_reg], t4, t5, a5, a2, a3, a4) \
-        : /* no outputs */                                                                         \
-        : [sender_reg] "r" (sending_core)                                                          \
-        : "t4", "t5", "a5", "a2", "a3", "a4"                                                       \
-    )
-
-/** @brief See READ_N_WORDS_AND_PRINT for documentation. */
-void read_n_words_and_print(int sending_core, int direction) {
-    switch (direction) {
-        case NORTHEAST_INT: READ_N_WORDS_AND_PRINT_HELPER(NORTHEAST_QUINTET); break;
-        case NORTH_INT: READ_N_WORDS_AND_PRINT_HELPER(NORTH_QUINTET); break;
-        case EAST_INT: READ_N_WORDS_AND_PRINT_HELPER(EAST_QUINTET); break;
-        default: *((int*) 0) = 0; // crash with NPE
-    }
-}
+#endif // LOW_LEVEL_INTERFACE_H
