@@ -1,8 +1,8 @@
 #ifndef ASM_UTILS_H
 #define ASM_UTILS_H
 
-#define TOKENPASTE2(x, y) x ## y
-#define TOKENPASTE1(x, y) TOKENPASTE2(x, y)
+#define TOKENPASTE2__(x, y) x ## y
+#define TOKENPASTE1__(x, y) TOKENPASTE2__(x, y)
 #define TOKENPASTE(x, y) TOKENPASTE1(x, y)
 
 /**
@@ -23,5 +23,13 @@
 #define REPEAT5(x) REPEAT2(x) REPEAT3(x)
 #define REPEAT7(x) REPEAT2(x) REPEAT5(x)
 #define REPEAT11(x) REPEAT7(x) REPEAT4(x)
+
+#define MUL4(in_reg, out_reg)                                                                      \
+    "slli " #out_reg ", " #in_reg ", 2\n\t"
+
+#define MUL5(in_reg, out_reg)                                                                      \
+    MUL4(in_reg, out_reg)                                                                          \
+    "add " #out_reg ", " #out_reg ", " #in_reg "\n\t"
+
 
 #endif // ASM_UTILS_H
