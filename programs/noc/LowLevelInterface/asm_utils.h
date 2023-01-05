@@ -23,6 +23,7 @@
 #define REPEAT5(x) REPEAT2(x) REPEAT3(x)
 #define REPEAT7(x) REPEAT2(x) REPEAT5(x)
 #define REPEAT11(x) REPEAT7(x) REPEAT4(x)
+#define REPEAT64(x) REPEAT4(REPEAT4(REPEAT4(x)))
 
 #define MUL4(in_reg, out_reg)                                                                      \
     "slli " #out_reg ", " #in_reg ", 2\n\t"

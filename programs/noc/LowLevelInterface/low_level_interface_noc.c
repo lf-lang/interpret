@@ -17,7 +17,6 @@ int main1();
 int main2();
 int main3();
 
-#define REPEAT64(x) REPEAT4(REPEAT4(REPEAT4(x)))
 #define BROADCAST_COUNT_SEND_ASM(nonce, n_words_reg, noc_base_address, clobber0) REPEAT64( \
     "sw " #n_words_reg ", 0(" #noc_base_address ")\n\t"                                            \
     "addi " #clobber0 ", " #n_words_reg ", -1\n\t"                                                 \
@@ -46,13 +45,6 @@ int main3();
     )                                                                                              \
     "END_BROADCAST_COUNT_FROM_CORE_ZERO:"
 
-#define RECEIVER_BODY REPEAT64(                                                                    \
-    "lw t2, 0(t4)\n\t" /* t4 has the base address for the noc */                                   \
-    "rdcycle t0\n\t"                                                                               \
-    "csrw 0x51e, a0\n\t"                                                                           \
-    "csrw 0x51e, t2\n\t"                                                                           \
-) "nop\n\t" /* Do not let the code self-modification kill a line that we actually need in the special case that the packet length is exactly 64. */
-
 
 int main() {
     int core_id = read_csr(CSR_COREID);
@@ -75,22 +67,13 @@ int main0() {
 }
 
 int main1() {
-    asm volatile(
-        "li a0, 0xbaaabaaa\n\t"
-        READ_N_WORDS(__LINE__, EAST_QUINTET, MUL4, 48, 438, x0, RECEIVER_BODY, t4, t5, a1, a2, a3)
-    );
+    read_n_words_and_print(0, EAST_INT);
 }
 
 int main2() {
-    asm volatile(
-        "li a0, 0xbaaabaaa\n\t"
-        READ_N_WORDS(__LINE__, NORTH_QUINTET, MUL4, 48, 438, x0, RECEIVER_BODY, t4, t5, a1, a2, a3)
-    );
+    read_n_words_and_print(0, NORTH_INT);
 }
 
 int main3() {
-    asm volatile(
-        "li a0, 0xbaaabaaa\n\t"
-        READ_N_WORDS(__LINE__, NORTHEAST_QUINTET, MUL4, 48, 438, x0, RECEIVER_BODY, t4, t5, a1, a2, a3)
-    );
+    read_n_words_and_print(0, NORTHEAST_INT);
 }
