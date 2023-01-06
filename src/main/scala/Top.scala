@@ -17,8 +17,7 @@ case class TopConfig(
 
 
 class TopIO(topCfg: TopConfig) extends Bundle {
-//  val gpio = new GPIO()(topCfg.coreCfg)
-//  val host = new HostIO()
+ val gpio = new GPIO()(topCfg.coreCfgs(0)) // FIXME: Do this properly
   val uart = new Bundle {
     val rx = Input(Bool())
     val tx = Output(Bool())
@@ -89,6 +88,11 @@ class Top(topCfg: TopConfig) extends Module {
       regCorePrintNext(i) := false.B
     }
   }
+
+  // TODO: What about one GPIO port per core?
+  // Only core0 gets GPIO wired out
+  io.gpio.in <> cores(0).io.gpio.in
+  io.gpio.out <> cores(0).io.gpio.out  
 
   // Only core0 can write on the uart
   io.uart.tx := wbUarts(0).ioUart.tx
