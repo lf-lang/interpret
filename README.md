@@ -48,6 +48,18 @@ fp-emu
 ```
 
 
+#### Simple SW UART
+```
+make remulator N_CORES=1
+cd programs/software-uart
+riscv_compile.sh ispm uart_tx.c
+fp-emu
+```
+
+Then open the generated `trace.vcd` in GTKwave and you should see the pin1 on io_gpio_out_0 transmitting the byte 0x55;
+0x55 = Start bit (low)-1-0-1-0-1-0-1-0-stop bit (high) 
+
+
 #### Bootloader
 A simple serial bootloader using the UART peripheral is also provided. This program will receive the application as a sequence of bytes through the UART peripheral. It expects a simple protocol as follows:
 - [SYNC_ID LEN DATA SYNC_ID]
