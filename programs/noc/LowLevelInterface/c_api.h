@@ -50,25 +50,56 @@ void read_n_words_and_print(int sending_core, int direction) {
 
 /** code related to BROADCAST_COUNT ***************************************************************/
 
-#define BROADCAST_COUNT_SEND_ASM(nonce, n_words_reg, noc_base_address, clobber0) REPEAT64( \
-    "sw " #n_words_reg ", 0(" #noc_base_address ")\n\t"                                            \
-    "addi " #clobber0 ", " #n_words_reg ", -1\n\t"                                                 \
-    "sw " #n_words_reg ", 0(" #noc_base_address ")\n\t"                                            \
-    "sw " #n_words_reg ", 0(" #noc_base_address ")\n\t"                                            \
-    "bge x0, " #clobber0 ", END_BROADCAST_COUNT_SEND_ASM" #nonce "\n\t"                                     \
+#define BROADCAST_COUNT_SEND_ASM(nonce, n_words_reg, countdown_reg, noc_base_address, clobber0) REPEAT64( \
+    "sw " #countdown_reg ", 0(" #noc_base_address ")\n\t"                                          \
+    "addi " #clobber0 ", " #countdown_reg ", -1\n\t"                                               \
+    "sw " #countdown_reg ", 0(" #noc_base_address ")\n\t"                                          \
+    "sw " #countdown_reg ", 0(" #noc_base_address ")\n\t"                                          \
+    "bge x0, " #clobber0 ", END_BROADCAST_COUNT_SEND_ASM_BODY" #nonce "\n\t"                       \
     "sw " #clobber0 ", 0(" #noc_base_address ")\n\t"                                               \
-    "addi " #n_words_reg ", " #clobber0 ", -1\n\t"                                                 \
+    "addi " #countdown_reg ", " #clobber0 ", -1\n\t"                                               \
     "sw " #clobber0 ", 0(" #noc_base_address ")\n\t"                                               \
     "sw " #clobber0 ", 0(" #noc_base_address ")\n\t"                                               \
-    "bge x0, " #n_words_reg ", END_BROADCAST_COUNT_SEND_ASM" #nonce "\n\t"                                  \
-) "END_BROADCAST_COUNT_SEND_ASM" #nonce ": nop\n\t" "nop\n\t" "nop\n\t"
-#define BROADCAST_COUNT_LOAD_ASM(n_words_reg) "andi " #n_words_reg ", " #n_words_reg ", 1023\n\t"
+    "bge x0, " #countdown_reg ", END_BROADCAST_COUNT_SEND_ASM_BODY" #nonce "\n\t"                  \
+)                                                                                                  \
+    "jal x0, END_BROADCAST_COUNT_SEND_ASM" #nonce "\n\t"                                           \
+    "END_BROADCAST_COUNT_SEND_ASM_BODY" #nonce ":\n\t"                                             \
+    "nop\n\t"                                                                                      \
+    "add " #n_words_reg ", x0, x0\n\t"                                                             \
+    "nop\n\t END_BROADCAST_COUNT_SEND_ASM" #nonce ": "
+
+#define BROADCAST_COUNT_INITIALIZE_ASM(nonce, countdown_reg, n_words_reg, constant_128)            \
+    "li " #constant_128 ", 128\n\t"                                                                \
+    "add " #n_words_reg ", " #countdown_reg ", x0\n\t"                                             \
+    "blt " #n_words_reg ", " #constant_128 ", BROADCAST_COUNT_DONE_INITIALIZING" #nonce "\n\t"     \
+    "addi " #n_words_reg ", " #countdown_reg ", -128\n\t"                                          \
+    "nop\n\t"                                                                                      \
+    "BROADCAST_COUNT_DONE_INITIALIZING" #nonce ":\n\t"                                             \
+    "li a4, 0xbaaabaaa\n\t"                                                                        \
+    "csrw 0x51e, a4\n\t"                                                                           \
+    "csrw 0x51e, " #countdown_reg "\n\t"                                                           \
+    "csrw 0x51e, a4\n\t"                                                                           \
+    "csrw 0x51e, " #n_words_reg "\n\t"
+
+#define BROADCAST_COUNT_PREPARE_NEXT_SEND_ASM(nonce, countdown_reg, n_words_reg, constant_128)     \
+    "li " #constant_128 ", 128\n\t"                                                                \
+    "addi " #n_words_reg ", " #countdown_reg ", -128\n\t"                                          \
+    "bge " #constant_128 ", " #n_words_reg ", BROADCAST_COUNT_DONE_PREPARING_NEXT" #nonce "\n\t"   \
+    "li " #n_words_reg ", 128\n\t"                                                                 \
+    "nop\n\t"                                                                                      \
+    "BROADCAST_COUNT_DONE_PREPARING_NEXT" #nonce ":\n\t"                                           \
+    "li a4, 0xbaaabaaa\n\t"                                                                        \
+    "csrw 0x51e, a4\n\t"                                                                           \
+    "csrw 0x51e, " #countdown_reg "\n\t"                                                           \
+    "csrw 0x51e, a4\n\t"                                                                           \
+    "csrw 0x51e, " #n_words_reg "\n\t"                                                             \
+    "nop\n\t"
 
 /**
- * @brief Broadcast a countdown from n_words_reg to 1 to all other cores.
+ * @brief Broadcast a countdown from countdown_reg to 1 to all other cores.
  * @param SENDING_TO_ZERO_MACRO, ..., SENDING_TO_THREE_MACRO: All of these should be TRUE_MACRO
  * except the one corresponding to the current core (which does not broadcast to itself).
- * @param n_words_reg Input: The number of words to send; also, the first number in the countdown.
+ * @param countdown_reg Input: The first number in the countdown.
  * Must be less than 128! May need to be even smaller depending on capability of receiver.
  * @param result_reg Output: Indicates whether operation succeeded. See SEND_N_WORDS for details.
  * @param noc_base_address Clobber.
@@ -79,22 +110,25 @@ void read_n_words_and_print(int sending_core, int direction) {
     SENDING_TO_ONE_MACRO,                                                                          \
     SENDING_TO_TWO_MACRO,                                                                          \
     SENDING_TO_THREE_MACRO,                                                                        \
-    n_words_reg,                                                                                   \
+    countdown_reg,                                                                                 \
     result_reg,                                                                                    \
     noc_base_address,                                                                              \
+    n_words_reg,                                                                                   \
     clobber1,                                                                                      \
     clobber2,                                                                                      \
     clobber3,                                                                                      \
     clobber4                                                                                       \
 )                                                                                                  \
+    "add " #n_words_reg ", " #countdown_reg ", x0\n\t"                                                                     \
     SEND_N_WORDS(                                                                                  \
         nonce,                                                                                     \
         n_words_reg,                                                                               \
         result_reg,                                                                                \
         TRUE_MACRO, TRUE_MACRO, TRUE_MACRO,                                                        \
         SENDING_TO_ZERO_MACRO, SENDING_TO_ONE_MACRO, SENDING_TO_TWO_MACRO, SENDING_TO_THREE_MACRO, \
-        BROADCAST_COUNT_LOAD_ASM(n_words_reg),                                                     \
-        BROADCAST_COUNT_SEND_ASM(nonce, n_words_reg, noc_base_address, clobber1),                  \
+        BROADCAST_COUNT_INITIALIZE_ASM(nonce, countdown_reg, n_words_reg, clobber2),               \
+        BROADCAST_COUNT_SEND_ASM(nonce, n_words_reg, countdown_reg, noc_base_address, clobber3),   \
+        BROADCAST_COUNT_PREPARE_NEXT_SEND_ASM(nonce, countdown_reg, n_words_reg, clobber2),        \
         noc_base_address, clobber1, clobber2, clobber3, clobber4                                   \
     )
 
@@ -112,15 +146,15 @@ void read_n_words_and_print(int sending_core, int direction) {
             SENDING_TO_ONE_MACRO,                                                                  \
             SENDING_TO_TWO_MACRO,                                                                  \
             SENDING_TO_THREE_MACRO,                                                                \
-            %[n_words_reg],                                                                        \
-            t1, t2, t3, t4, t5, t6                                                                 \
+            %[countdown_reg],                                                                      \
+            t0, t1, t2, t3, t4, t5, t6                                                             \
         )                                                                                          \
         : /* no outputs */                                                                         \
-        : [n_words_reg] "r" (start_count_at)                                                       \
-        : "t1", "t2", "t3", "t4", "t5", "t6"                                                       \
+        : [countdown_reg] "r" (start_count_at)                                                     \
+        : "t0", "t1", "t2", "t3", "t4", "t5", "t6"                                                 \
     )
 
-/** @brief See BROADCAST_COUNT for documentation. start_count_at corresponds to n_words_reg. */
+/** @brief See BROADCAST_COUNT for documentation. start_count_at corresponds to countdown_reg. */
 void broadcast_count(int current_core, int start_count_at) {
     switch(current_core) {
         case 0: broadcast_count_HELPER(__LINE__, FALSE_MACRO, TRUE_MACRO, TRUE_MACRO, TRUE_MACRO); break;

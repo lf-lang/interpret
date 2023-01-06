@@ -25,6 +25,28 @@
 #define REPEAT11(x) REPEAT7(x) REPEAT4(x)
 #define REPEAT64(x) REPEAT4(REPEAT4(REPEAT4(x)))
 
+#define COUNT_TO_20(MACRO, param0, param1, param2) \
+    MACRO(param0, param1, param2, 0) \
+    MACRO(param0, param1, param2, 1) \
+    MACRO(param0, param1, param2, 2) \
+    MACRO(param0, param1, param2, 3) \
+    MACRO(param0, param1, param2, 4) \
+    MACRO(param0, param1, param2, 5) \
+    MACRO(param0, param1, param2, 6) \
+    MACRO(param0, param1, param2, 7) \
+    MACRO(param0, param1, param2, 8) \
+    MACRO(param0, param1, param2, 9) \
+    MACRO(param0, param1, param2, 10) \
+    MACRO(param0, param1, param2, 11) \
+    MACRO(param0, param1, param2, 12) \
+    MACRO(param0, param1, param2, 13) \
+    MACRO(param0, param1, param2, 14) \
+    MACRO(param0, param1, param2, 15) \
+    MACRO(param0, param1, param2, 16) \
+    MACRO(param0, param1, param2, 17) \
+    MACRO(param0, param1, param2, 18) \
+    MACRO(param0, param1, param2, 19)
+
 #define MUL4(in_reg, out_reg)                                                                      \
     "slli " #out_reg ", " #in_reg ", 2\n\t"
 

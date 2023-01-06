@@ -116,11 +116,14 @@
  * to send a message before this even tries to send a message, 0x80000000 if one of the potential
  * message receivers tries to send a message after this tries to send a message (so awkward! who
  * gets to talk first?)
- * @param load_words_asm Assembly code for preparing to send words, e.g. by loading the words into
+ * @param initialize_asm Assembly code for preparing to send words, e.g. by loading the words into
  * the register file.
  * @param send_words_asm Assembly code for sending the words rapidly. Must never miss a TDM slot!
  * May assume that the preceding code has already taken care of synchronization. Must preserve
- * synchronization.
+ * synchronization. Must set n_words_reg to hold the number of words in the next contiguous sequence,
+ * with the top bit set high if the length of prepare_for_next_send_words_asm is not exactly 11
+ * cycles.
+ * @param prepare_for_next_send_words_asm Prepare for the next run of send_words_asm.
  * @param TIMES_TO_REPEAT_SEND_WORDS_ASM Macro that repeats send_words_asm an appropriate number of
  * times.
  * @param noc_base_address Register that will hold the NoC base address. No assumptions are made
@@ -140,8 +143,9 @@
     SENDING_TO_ONE_MACRO,                                                                          \
     SENDING_TO_TWO_MACRO,                                                                          \
     SENDING_TO_THREE_MACRO,                                                                        \
-    load_words_asm,                                                                                \
+    initialize_asm,                                                                                \
     send_words_asm,                                                                                \
+    prepare_for_next_send_words_asm,                                                               \
     noc_base_address, clobber1, clobber2, clobber3, clobber4 \
 )                                      \
     LOAD_NOC_BASE_ADDRESS(noc_base_address) \
@@ -165,20 +169,24 @@
     "li " #clobber3 ", 3\n\t" \
     SENDING_TO_THREE_MACRO(READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce ## 3, noc_base_address, clobber2, clobber3, result_reg, clobber1, END_SEND_N_WORDS ## nonce), "") \
     /* At this point, all prospective message receivers have agreed that they are ready to receive the given number of words by replying using responses that have zero as their tag bit. By my count the TDM slot of the next instruction will be -2 mod 5, but for now I won't use that fact, preferring instead to re-synchronize, just to make the assembly easier to write (less brittle, less performant). */ \
-    load_words_asm \
+    initialize_asm \
     SYNC5(nonce ## 1, noc_base_address, clobber1, clobber2, clobber3, clobber4) \
     /* The following 5 cycles are spent to break the receivers from their polling loop. */ \
+    "SEND_N_WORDS_SENDING_SYNC_WORD" #nonce ": \n\t"                                               \
     SENDING_NORTHEAST_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
     "nop\n\t" \
     SENDING_NORTH_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
     SENDING_EAST_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
     "nop\n\t" \
-    send_words_asm \
-    SENDING_NORTHEAST_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
+    "SEND_N_WORDS_SEND_WORDS_ASM" #nonce ": " send_words_asm \
+    SENDING_NORTHEAST_MACRO("sw " #n_words_reg ", 0(" #noc_base_address ")\n\t", "nop\n\t") \
     "nop\n\t" \
-    SENDING_NORTH_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
-    SENDING_EAST_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
-    "nop\n\t" \
+    SENDING_NORTH_MACRO("sw " #n_words_reg ", 0(" #noc_base_address ")\n\t", "nop\n\t") \
+    SENDING_EAST_MACRO("sw " #n_words_reg ", 0(" #noc_base_address ")\n\t", "nop\n\t") \
+    "beqz " #n_words_reg ", END_SEND_N_WORDS" #nonce "\n\t"                                        \
+    prepare_for_next_send_words_asm                                                                \
+    "blt x0, " #n_words_reg ", SEND_N_WORDS_SEND_WORDS_ASM" #nonce "\n\t"                          \
+    "jal x0, SEND_N_WORDS_SENDING_SYNC_WORD" #nonce "\n\t"                                         \
     "END_SEND_N_WORDS" #nonce ":\n\t"
 
 /**
@@ -253,7 +261,7 @@
     "READ_N_WORDS_RECEIVE_WORDS" #nonce ": " receive_words_asm /* Upon jumping out of this block (at 0 cycles mod 5) we should be at -2 cycles (mod 5) */ \
     "sw " #replaced_instruction_reg ", 52(" #packet_size_reg ")\n\t"  /* restore the modified imem entry */ \
     "nop\n\t"                                                                                      \
-    "lw " #clobber4 ", 0(" #noc_base_address ")\n\t"        /* cycle 0 mod 5 */                        \
+    "lw " #clobber4 ", 0(" #noc_base_address ")\n\t"        /* cycle 0 mod 5 */                    \
     "beqz " #clobber4 ", READ_N_WORDS_END" #nonce " \n\t"                                          \
     MUL_BY_RECEIVE_WORDS_PERIOD_2INSTRS_2CYCLES(clobber4, replaced_instruction_reg)                \
     "slli " #packet_size_reg ", " #replaced_instruction_reg ", 2\n\t"  /* cycle 0 mod 5 */         \
