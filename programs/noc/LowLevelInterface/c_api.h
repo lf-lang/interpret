@@ -55,13 +55,13 @@ void read_n_words_and_print(int sending_core, int direction) {
     "addi " #clobber0 ", " #n_words_reg ", -1\n\t"                                                 \
     "sw " #n_words_reg ", 0(" #noc_base_address ")\n\t"                                            \
     "sw " #n_words_reg ", 0(" #noc_base_address ")\n\t"                                            \
-    "bge x0, " #clobber0 ", END_BROADCAST_COUNT" #nonce "\n\t"                                     \
+    "bge x0, " #clobber0 ", END_BROADCAST_COUNT_SEND_ASM" #nonce "\n\t"                                     \
     "sw " #clobber0 ", 0(" #noc_base_address ")\n\t"                                               \
     "addi " #n_words_reg ", " #clobber0 ", -1\n\t"                                                 \
     "sw " #clobber0 ", 0(" #noc_base_address ")\n\t"                                               \
     "sw " #clobber0 ", 0(" #noc_base_address ")\n\t"                                               \
-    "bge x0, " #n_words_reg ", END_BROADCAST_COUNT" #nonce "\n\t"                                  \
-)
+    "bge x0, " #n_words_reg ", END_BROADCAST_COUNT_SEND_ASM" #nonce "\n\t"                                  \
+) "END_BROADCAST_COUNT_SEND_ASM" #nonce ": nop\n\t" "nop\n\t" "nop\n\t"
 #define BROADCAST_COUNT_LOAD_ASM(n_words_reg) "andi " #n_words_reg ", " #n_words_reg ", 1023\n\t"
 
 /**
@@ -96,8 +96,7 @@ void read_n_words_and_print(int sending_core, int direction) {
         BROADCAST_COUNT_LOAD_ASM(n_words_reg),                                                     \
         BROADCAST_COUNT_SEND_ASM(nonce, n_words_reg, noc_base_address, clobber1),                  \
         noc_base_address, clobber1, clobber2, clobber3, clobber4                                   \
-    )                                                                                              \
-    "END_BROADCAST_COUNT" #nonce ":"
+    )
 
 #define broadcast_count_HELPER(                                                                    \
     nonce,                                                                                         \

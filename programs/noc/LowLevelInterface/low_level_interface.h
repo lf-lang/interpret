@@ -174,14 +174,20 @@
     SENDING_EAST_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
     "nop\n\t" \
     send_words_asm \
-    "END_SEND_N_WORDS" #nonce ": nop\n\t"
+    SENDING_NORTHEAST_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
+    "nop\n\t" \
+    SENDING_NORTH_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
+    SENDING_EAST_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
+    "nop\n\t" \
+    "END_SEND_N_WORDS" #nonce ":\n\t"
 
 /**
  * @brief Read the number of words specified by the sender.
  * @param DIRECTION_QUINTET_MACRO The macro corresponding to the direction of the sender from the
  * receiver.
- * @param MUL_BY_RECEIVE_WORDS_PERIOD Assembly that takes an in_reg and an out_reg and sets the
- * out_reg to the number of instructions in each 5-cycle subsequence of receive_words_asm.
+ * @param MUL_BY_RECEIVE_WORDS_PERIOD_2INSTRS_2CYCLES Assembly that takes an in_reg and an out_reg
+ * and sets the out_reg to the number of instructions in each 5-cycle subsequence of
+ * receive_words_asm.
  * @param offset_numeric_literal 36 plus (4 times the number of instructions in
  * preparatory asm). This will be 48 unless one provides instructions that
  * cause stalls, such as loads, branches, or jumps.
@@ -199,7 +205,7 @@
 #define READ_N_WORDS(                                                                              \
     nonce,                                                                                         \
     DIRECTION_QUINTET_MACRO,                                                                       \
-    MUL_BY_RECEIVE_WORDS_PERIOD,                                                                   \
+    MUL_BY_RECEIVE_WORDS_PERIOD_2INSTRS_2CYCLES,                                                                   \
     offset_numeric_literal,                                                                        \
     hex_for_12_bit_distance_from_auipc_to_end,                                                     \
     sending_core_reg,                                                                              \
@@ -208,7 +214,7 @@
 ) READ_N_WORDS__(                                                                                  \
     nonce,                                                                                         \
     DIRECTION_QUINTET_MACRO,                                                                       \
-    MUL_BY_RECEIVE_WORDS_PERIOD,                                                                   \
+    MUL_BY_RECEIVE_WORDS_PERIOD_2INSTRS_2CYCLES,                                                                   \
     offset_numeric_literal,                                                                        \
     hex_for_12_bit_distance_from_auipc_to_end,                                                     \
     sending_core_reg,                                                                              \
@@ -219,7 +225,7 @@
 #define READ_N_WORDS__(                                                                              \
     nonce,                                                                                         \
     DIRECTION_QUINTET_MACRO,                                                                       \
-    MUL_BY_RECEIVE_WORDS_PERIOD,                                                                   \
+    MUL_BY_RECEIVE_WORDS_PERIOD_2INSTRS_2CYCLES,                                                                   \
     offset_numeric_literal,                                                                        \
     hex_for_12_bit_distance_from_auipc_to_end,                                                     \
     sending_core_reg,                                                                              \
@@ -227,7 +233,7 @@
     noc_base_address, packet_size_reg, jalr_word_reg, replaced_instruction_reg, clobber4           \
 )                                                                                                  \
     BLOCKING_READ(nonce ## 1, noc_base_address, clobber4, sending_core_reg)                 \
-    MUL_BY_RECEIVE_WORDS_PERIOD(clobber4, packet_size_reg) /* This kills the tag bit, as desired */ \
+    MUL_BY_RECEIVE_WORDS_PERIOD_2INSTRS_2CYCLES(clobber4, packet_size_reg) /* This kills the tag bit, as desired */ \
     "slli " #packet_size_reg ", " #packet_size_reg ", 2\n\t"                                       \
     SYNC5(nonce ## 2, sending_core_reg, t6, jalr_word_reg, replaced_instruction_reg, clobber4)     \
     "auipc t6, 0\n\t"                                                                              \
@@ -236,16 +242,27 @@
     "nop\n\t" /* It might be wise to preserve jalr_word_reg for use in a future iteration. t6 can also be preserved, although we will need to add/subtract from it, according to the new sub-packet length, presumably using a preserved value of packet_size_reg. */ \
     DIRECTION_QUINTET_MACRO(                                                                       \
         "lw " #replaced_instruction_reg ", 52(" #packet_size_reg ")\n\t", /* replaced_instruction_reg := instruction to be replaced (receive_words_asm must not clobber replaced_instruction_reg!) */ \
-        "sw " #jalr_word_reg ", 52(" #packet_size_reg ")\n\t",                                                       \
+        "sw " #jalr_word_reg ", 52(" #packet_size_reg ")\n\t",                                     \
         "nop\n\t",                                                                                 \
         x0, /* It doesn't really matter what you send, as long as the tag bit is zero */ \
         noc_base_address                                                                           \
     )                                                                                              \
-    BLOCK_ON_FLIT_FROM_CORE(nonce, noc_base_address, clobber4) /* 2 instructions, -2 cycles (mod 5) */ \
+    "READ_N_WORDS_WAIT_FOR_SYNC_WORD" #nonce ": " BLOCK_ON_FLIT_FROM_CORE(nonce, noc_base_address, clobber4) /* 2 instructions, -2 cycles (mod 5) */ \
     "nop\n\t"                                                                                      \
     "nop\n\t"                                                                                      \
-    receive_words_asm                                                                              \
-    "READ_N_WORDS_END" #nonce ":\n\t"                                                              \
-    "sw " #replaced_instruction_reg ", 52(t6)\n\t"  /* restore the modified imem entry */
+    "READ_N_WORDS_RECEIVE_WORDS" #nonce ": " receive_words_asm /* Upon jumping out of this block (at 0 cycles mod 5) we should be at -2 cycles (mod 5) */ \
+    "sw " #replaced_instruction_reg ", 52(" #packet_size_reg ")\n\t"  /* restore the modified imem entry */ \
+    "nop\n\t"                                                                                      \
+    "lw " #clobber4 ", 0(" #noc_base_address ")\n\t"        /* cycle 0 mod 5 */                        \
+    "beqz " #clobber4 ", READ_N_WORDS_END" #nonce " \n\t"                                          \
+    MUL_BY_RECEIVE_WORDS_PERIOD_2INSTRS_2CYCLES(clobber4, replaced_instruction_reg)                \
+    "slli " #packet_size_reg ", " #replaced_instruction_reg ", 2\n\t"  /* cycle 0 mod 5 */         \
+    "add " #packet_size_reg ", t6, " #packet_size_reg "\n\t"                                       \
+    "lw " #replaced_instruction_reg ", 52(" #packet_size_reg ")\n\t"                               \
+    "sw " #jalr_word_reg ", 52(" #packet_size_reg ")\n\t"                                          \
+    "nop\n\t"                                           /* cycle 0 mod 5 */                        \
+    "blt " #clobber4 ", x0, READ_N_WORDS_WAIT_FOR_SYNC_WORD" #nonce " \n\t" /* Interpret a tag bit as a request from the sender to have some extra time to prepare for the next burst of data. No need to keep the same alignment mod 5 as before. Coarse (within 5 of cycle-accurate) but adequate synchronization will be done in the busy loop. */ \
+    "jal x0, READ_N_WORDS_RECEIVE_WORDS" #nonce "\n\t"  /* Jump straight in without re-synchronizing, after incurring 20 (= 0 (mod 5)) cycles of overhead. */ \
+    "READ_N_WORDS_END" #nonce ": "                                                                 \
 
 #endif // LOW_LEVEL_INTERFACE_H
