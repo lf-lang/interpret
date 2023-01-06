@@ -27,7 +27,7 @@ void we_are_bedeviled() {
  * The remaining registers are all clobbers.
  */
 #define READ_N_WORDS_AND_PRINT(nonce, DIRECTION_QUINTET_MACRO, sender_reg, clobber0, clobber1, clobber2, clobber3, clobber4, clobber5) \
-    READ_N_WORDS(nonce, DIRECTION_QUINTET_MACRO, MUL4, 48, 438, sender_reg, LOAD_AND_PRINT_RECEIVER_BODY(clobber0, clobber4, clobber5), clobber0, clobber1, clobber2, clobber3, clobber4)
+    READ_N_WORDS(nonce, DIRECTION_QUINTET_MACRO, MUL4_2CYCLES, 48, 438, sender_reg, LOAD_AND_PRINT_RECEIVER_BODY(clobber0, clobber4, clobber5), clobber0, clobber1, clobber2, clobber3, clobber4)
 
 #define read_n_words_and_print_HELPER(DIRECTION_QUINTET_MACRO)                                     \
     asm volatile(                                                                                  \
@@ -50,7 +50,7 @@ void read_n_words_and_print(int sending_core, int direction) {
 
 /** code related to BROADCAST_COUNT ***************************************************************/
 
-#define BROADCAST_COUNT_SEND_ASM(nonce, n_words_reg, countdown_reg, noc_base_address, clobber0) REPEAT64( \
+#define BROADCAST_COUNT_SEND_ASM(nonce, n_words_reg, countdown_reg, noc_base_address, clobber0) REPEAT4(REPEAT4( \
     "sw " #countdown_reg ", 0(" #noc_base_address ")\n\t"                                          \
     "addi " #clobber0 ", " #countdown_reg ", -1\n\t"                                               \
     "sw " #countdown_reg ", 0(" #noc_base_address ")\n\t"                                          \
@@ -61,18 +61,20 @@ void read_n_words_and_print(int sending_core, int direction) {
     "sw " #clobber0 ", 0(" #noc_base_address ")\n\t"                                               \
     "sw " #clobber0 ", 0(" #noc_base_address ")\n\t"                                               \
     "bge x0, " #countdown_reg ", END_BROADCAST_COUNT_SEND_ASM_BODY" #nonce "\n\t"                  \
-)                                                                                                  \
+))                                                                                                 \
+    "nop\n\t"                                                                                      \
+    "nop\n\t"                                                                                      \
     "jal x0, END_BROADCAST_COUNT_SEND_ASM" #nonce "\n\t"                                           \
     "END_BROADCAST_COUNT_SEND_ASM_BODY" #nonce ":\n\t"                                             \
     "nop\n\t"                                                                                      \
     "add " #n_words_reg ", x0, x0\n\t"                                                             \
-    "nop\n\t END_BROADCAST_COUNT_SEND_ASM" #nonce ": "
+    "nop\n\tEND_BROADCAST_COUNT_SEND_ASM" #nonce ": "
 
-#define BROADCAST_COUNT_INITIALIZE_ASM(nonce, countdown_reg, n_words_reg, constant_128)            \
-    "li " #constant_128 ", 128\n\t"                                                                \
+#define BROADCAST_COUNT_INITIALIZE_ASM(nonce, countdown_reg, n_words_reg, constant_32)            \
+    "li " #constant_32 ", 32\n\t"                                                                \
     "add " #n_words_reg ", " #countdown_reg ", x0\n\t"                                             \
-    "blt " #n_words_reg ", " #constant_128 ", BROADCAST_COUNT_DONE_INITIALIZING" #nonce "\n\t"     \
-    "addi " #n_words_reg ", " #countdown_reg ", -128\n\t"                                          \
+    "blt " #n_words_reg ", " #constant_32 ", BROADCAST_COUNT_DONE_INITIALIZING" #nonce "\n\t"     \
+    "li " #n_words_reg ", 32\n\t"                                                                 \
     "nop\n\t"                                                                                      \
     "BROADCAST_COUNT_DONE_INITIALIZING" #nonce ":\n\t"                                             \
     "li a4, 0xbaaabaaa\n\t"                                                                        \
@@ -81,18 +83,14 @@ void read_n_words_and_print(int sending_core, int direction) {
     "csrw 0x51e, a4\n\t"                                                                           \
     "csrw 0x51e, " #n_words_reg "\n\t"
 
-#define BROADCAST_COUNT_PREPARE_NEXT_SEND_ASM(nonce, countdown_reg, n_words_reg, constant_128)     \
-    "li " #constant_128 ", 128\n\t"                                                                \
-    "addi " #n_words_reg ", " #countdown_reg ", -128\n\t"                                          \
-    "bge " #constant_128 ", " #n_words_reg ", BROADCAST_COUNT_DONE_PREPARING_NEXT" #nonce "\n\t"   \
-    "li " #n_words_reg ", 128\n\t"                                                                 \
+#define BROADCAST_COUNT_PREPARE_NEXT_SEND_ASM(nonce, countdown_reg, n_words_reg, constant_32)      \
+    "li " #constant_32 ", 32\n\t"                                                                  \
+    "addi " #n_words_reg ", " #countdown_reg ", -32\n\t"                                           \
+    "bge " #constant_32 ", " #n_words_reg ", BROADCAST_COUNT_DONE_PREPARING_NEXT" #nonce "\n\t"    \
+    "li " #n_words_reg ", 32\n\t"                                                                  \
     "nop\n\t"                                                                                      \
     "BROADCAST_COUNT_DONE_PREPARING_NEXT" #nonce ":\n\t"                                           \
-    "li a4, 0xbaaabaaa\n\t"                                                                        \
-    "csrw 0x51e, a4\n\t"                                                                           \
-    "csrw 0x51e, " #countdown_reg "\n\t"                                                           \
-    "csrw 0x51e, a4\n\t"                                                                           \
-    "csrw 0x51e, " #n_words_reg "\n\t"                                                             \
+    "andi " #n_words_reg ", " #n_words_reg ", 1023\n\t"    /* Don't let it go negative. If it goes negative, we're basically done, so it's OK for it to become garbage. But it mustn't go negative. */                                                              \
     "nop\n\t"
 
 /**
@@ -100,7 +98,6 @@ void read_n_words_and_print(int sending_core, int direction) {
  * @param SENDING_TO_ZERO_MACRO, ..., SENDING_TO_THREE_MACRO: All of these should be TRUE_MACRO
  * except the one corresponding to the current core (which does not broadcast to itself).
  * @param countdown_reg Input: The first number in the countdown.
- * Must be less than 128! May need to be even smaller depending on capability of receiver.
  * @param result_reg Output: Indicates whether operation succeeded. See SEND_N_WORDS for details.
  * @param noc_base_address Clobber.
  */
@@ -119,7 +116,7 @@ void read_n_words_and_print(int sending_core, int direction) {
     clobber3,                                                                                      \
     clobber4                                                                                       \
 )                                                                                                  \
-    "add " #n_words_reg ", " #countdown_reg ", x0\n\t"                                                                     \
+    BROADCAST_COUNT_INITIALIZE_ASM(nonce ## 123, countdown_reg, n_words_reg, clobber2)             \
     SEND_N_WORDS(                                                                                  \
         nonce,                                                                                     \
         n_words_reg,                                                                               \

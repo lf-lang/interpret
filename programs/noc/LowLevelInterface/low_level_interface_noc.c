@@ -30,7 +30,7 @@ int main() {
 }
 
 int main0() {
-    broadcast_count(0, 17);
+    broadcast_count(0, 130);
     // read_n_words_and_print(1, EAST_INT);
     // read_n_words_and_print(2, NORTH_INT);
     // read_n_words_and_print(3, NORTHEAST_INT);

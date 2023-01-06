@@ -189,11 +189,14 @@
     "jal x0, SEND_N_WORDS_SENDING_SYNC_WORD" #nonce "\n\t"                                         \
     "END_SEND_N_WORDS" #nonce ":\n\t"
 
+#define MUL4_2CYCLES(in_reg, out_reg)                                                              \
+    MUL4(in_reg, out_reg) "nop\n\t"
+
 /**
  * @brief Read the number of words specified by the sender.
  * @param DIRECTION_QUINTET_MACRO The macro corresponding to the direction of the sender from the
  * receiver.
- * @param MUL_BY_RECEIVE_WORDS_PERIOD_2INSTRS_2CYCLES Assembly that takes an in_reg and an out_reg
+ * @param MUL_BY_RECEIVE_WORDS_PERIOD_2CYCLES Assembly that takes an in_reg and an out_reg
  * and sets the out_reg to the number of instructions in each 5-cycle subsequence of
  * receive_words_asm.
  * @param offset_numeric_literal 36 plus (4 times the number of instructions in
@@ -213,7 +216,7 @@
 #define READ_N_WORDS(                                                                              \
     nonce,                                                                                         \
     DIRECTION_QUINTET_MACRO,                                                                       \
-    MUL_BY_RECEIVE_WORDS_PERIOD_2INSTRS_2CYCLES,                                                                   \
+    MUL_BY_RECEIVE_WORDS_PERIOD_2CYCLES,                                                                   \
     offset_numeric_literal,                                                                        \
     hex_for_12_bit_distance_from_auipc_to_end,                                                     \
     sending_core_reg,                                                                              \
@@ -222,7 +225,7 @@
 ) READ_N_WORDS__(                                                                                  \
     nonce,                                                                                         \
     DIRECTION_QUINTET_MACRO,                                                                       \
-    MUL_BY_RECEIVE_WORDS_PERIOD_2INSTRS_2CYCLES,                                                                   \
+    MUL_BY_RECEIVE_WORDS_PERIOD_2CYCLES,                                                                   \
     offset_numeric_literal,                                                                        \
     hex_for_12_bit_distance_from_auipc_to_end,                                                     \
     sending_core_reg,                                                                              \
@@ -233,7 +236,7 @@
 #define READ_N_WORDS__(                                                                              \
     nonce,                                                                                         \
     DIRECTION_QUINTET_MACRO,                                                                       \
-    MUL_BY_RECEIVE_WORDS_PERIOD_2INSTRS_2CYCLES,                                                                   \
+    MUL_BY_RECEIVE_WORDS_PERIOD_2CYCLES,                                                                   \
     offset_numeric_literal,                                                                        \
     hex_for_12_bit_distance_from_auipc_to_end,                                                     \
     sending_core_reg,                                                                              \
@@ -241,7 +244,7 @@
     noc_base_address, packet_size_reg, jalr_word_reg, replaced_instruction_reg, clobber4           \
 )                                                                                                  \
     BLOCKING_READ(nonce ## 1, noc_base_address, clobber4, sending_core_reg)                 \
-    MUL_BY_RECEIVE_WORDS_PERIOD_2INSTRS_2CYCLES(clobber4, packet_size_reg) /* This kills the tag bit, as desired */ \
+    MUL_BY_RECEIVE_WORDS_PERIOD_2CYCLES(clobber4, packet_size_reg) /* This kills the tag bit, as desired */ \
     "slli " #packet_size_reg ", " #packet_size_reg ", 2\n\t"                                       \
     SYNC5(nonce ## 2, sending_core_reg, t6, jalr_word_reg, replaced_instruction_reg, clobber4)     \
     "auipc t6, 0\n\t"                                                                              \
@@ -263,7 +266,7 @@
     "nop\n\t"                                                                                      \
     "lw " #clobber4 ", 0(" #noc_base_address ")\n\t"        /* cycle 0 mod 5 */                    \
     "beqz " #clobber4 ", READ_N_WORDS_END" #nonce " \n\t"                                          \
-    MUL_BY_RECEIVE_WORDS_PERIOD_2INSTRS_2CYCLES(clobber4, replaced_instruction_reg)                \
+    MUL_BY_RECEIVE_WORDS_PERIOD_2CYCLES(clobber4, replaced_instruction_reg)                \
     "slli " #packet_size_reg ", " #replaced_instruction_reg ", 2\n\t"  /* cycle 0 mod 5 */         \
     "add " #packet_size_reg ", t6, " #packet_size_reg "\n\t"                                       \
     "lw " #replaced_instruction_reg ", 52(" #packet_size_reg ")\n\t"                               \
