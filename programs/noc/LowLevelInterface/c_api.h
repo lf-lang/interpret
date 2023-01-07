@@ -77,11 +77,8 @@ void read_n_words_and_print(int sending_core, int direction) {
     "li " #n_words_reg ", 32\n\t"                                                                 \
     "nop\n\t"                                                                                      \
     "BROADCAST_COUNT_DONE_INITIALIZING" #nonce ":\n\t"                                             \
-    "li a4, 0xbaaabaaa\n\t"                                                                        \
-    "csrw 0x51e, a4\n\t"                                                                           \
-    "csrw 0x51e, " #countdown_reg "\n\t"                                                           \
-    "csrw 0x51e, a4\n\t"                                                                           \
-    "csrw 0x51e, " #n_words_reg "\n\t"
+    "nop\n\t"                                                                                      \
+    "nop\n\t"
 
 #define BROADCAST_COUNT_PREPARE_NEXT_SEND_ASM(nonce, countdown_reg, n_words_reg, constant_32)      \
     "li " #constant_32 ", 32\n\t"                                                                  \

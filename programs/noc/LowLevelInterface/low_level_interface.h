@@ -25,6 +25,7 @@
     "sw " #to_send_reg ", 0(" #noc_base_address_reg ")\n\t" \
     asm1cycle1
 
+/** Load 0x80000000 in 1 cycle. */
 #define LOAD_NOC_BASE_ADDRESS(reg) "li " #reg ", 0x80000000\n\t"
 
 /**
@@ -72,7 +73,7 @@
 
 /**
  * @brief Load the NoC base address corresponding to the value of sending_core_reg into
- * noc_core_base_address.
+ * noc_core_base_address. Takes 3 cycles.
  * @param noc_core_base_address Output: The address of data sent from the given core.
  * @param sending_core_reg Input (preserved): The number of the sending core. This register is not
  * clobbered so that the optimization of passing in x0 for it can be used.
@@ -82,13 +83,16 @@
     "slli " #clobber0 ", " #sending_core_reg ", 2\n\t"                                             \
     "add " #noc_core_base_address ", " #clobber0 ", " #noc_core_base_address "\n\t"
 
-#define BLOCK_ON_FLIT_FROM_CORE(nonce, noc_core_base_address, clobber0) BLOCK_ON_FLIT_FROM_CORE__(nonce, noc_core_base_address, clobber0) // This indirection is necessary for the preprocessor to expand the macro arg __LINE__. :eye_roll:
+/** @brief Block until a flit comes from the core withthe given base address. Takes 3 cycles (mod 5). */
+#define BLOCK_ON_FLIT_FROM_CORE(nonce, noc_core_base_address, clobber0) BLOCK_ON_FLIT_FROM_CORE__(nonce, noc_core_base_address, clobber0)
+// This indirection is necessary for the preprocessor to expand the macro arg __LINE__. :eye_roll:
 #define BLOCK_ON_FLIT_FROM_CORE__(nonce, noc_core_base_address, clobber0) \
     "BLOCKING_READ_POLL" #nonce ": lw " #clobber0 ", 16(" #noc_core_base_address ")\n\t"           \
     "beq x0, " #clobber0 ", BLOCKING_READ_POLL" #nonce "\n\t"                                      \
 
 /**
- * @brief Do a blocking read of the message from the core at sending_core_reg.
+ * @brief Do a blocking read of the message from the core at sending_core_reg. Takes 3 cycles
+ * (mod 5).
  * @param noc_core_base_address Output: The base address corresponding to sending_core_reg.
  * @param read_to_reg Output: The result of the blocking read.
  * @param sending_core_reg Input (preserved): The number of the sending core.
@@ -103,7 +107,7 @@
     "lw " #clobber0 ", " #offset_literal "(" #noc_base_address_reg ")\n\t" \
     "or " #accumulator_reg ", " #accumulator_reg ", " #clobber0 "\n\t"
 
-/** Helper to SEND_N_WORDS. */
+/** Helper to SEND_N_WORDS. Takes 0 cycles (mod 5) if successful. */
 #define READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce, noc_base_address_reg, read_to_reg, sending_core_reg, result_reg, tag_bit_mask, fail_label) \
     BLOCKING_READ(nonce, noc_base_address_reg, read_to_reg, sending_core_reg) \
     "and " #result_reg ", " #read_to_reg ", " #tag_bit_mask "\n\t" /* check tag bit */ \
@@ -117,7 +121,7 @@
  * message receivers tries to send a message after this tries to send a message (so awkward! who
  * gets to talk first?)
  * @param initialize_asm Assembly code for preparing to send words, e.g. by loading the words into
- * the register file.
+ * the register file. Must take 2 cycles (mod 5).
  * @param send_words_asm Assembly code for sending the words rapidly. Must never miss a TDM slot!
  * May assume that the preceding code has already taken care of synchronization. Must preserve
  * synchronization. Must set n_words_reg to hold the number of words in the next contiguous sequence,
@@ -168,9 +172,8 @@
     SENDING_TO_TWO_MACRO(READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce ## 2, noc_base_address, clobber2, clobber3, result_reg, clobber1, END_SEND_N_WORDS ## nonce), "") \
     "li " #clobber3 ", 3\n\t" \
     SENDING_TO_THREE_MACRO(READ_AND_FAIL_IF_TAG_BIT_IS_1(nonce ## 3, noc_base_address, clobber2, clobber3, result_reg, clobber1, END_SEND_N_WORDS ## nonce), "") \
-    /* At this point, all prospective message receivers have agreed that they are ready to receive the given number of words by replying using responses that have zero as their tag bit. By my count the TDM slot of the next instruction will be -2 mod 5, but for now I won't use that fact, preferring instead to re-synchronize, just to make the assembly easier to write (less brittle, less performant). */ \
+    /* At this point, all prospective message receivers have agreed that they are ready to receive the given number of words by replying using responses that have zero as their tag bit. Cycle is 2 (mod 5). */ \
     initialize_asm \
-    SYNC5(nonce ## 1, noc_base_address, clobber1, clobber2, clobber3, clobber4) \
     /* The following 5 cycles are spent to break the receivers from their polling loop. */ \
     "SEND_N_WORDS_SENDING_SYNC_WORD" #nonce ": \n\t"                                               \
     SENDING_NORTHEAST_MACRO("sw x0, 0(" #noc_base_address ")\n\t", "nop\n\t") \
