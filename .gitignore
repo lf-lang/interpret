@@ -6,6 +6,7 @@ target/
 build/
 emulator/*.v
 emulator/obj_dir
+.bloop
 
 # Generated files
 **/*.mem
@@ -17,3 +18,4 @@ emulator/obj_dir
 **/*.orig
 **/*.dump
 **/fp-emu
+**/*.fir
