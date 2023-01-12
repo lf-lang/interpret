@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <flexpret_io.h>
 #include <flexpret_noc.h>
+#include <flexpret_thread.h>
 
 int main0();
 int main1();
@@ -10,6 +11,7 @@ int main3();
 int main() {
     int core_id = read_csr(CSR_COREID);
     _fp_print(core_id);
+    _fp_print(NUM_THREADS);
 
     switch(core_id) {
         case 0: main0(); break;
@@ -18,6 +20,9 @@ int main() {
         case 3: main3(); break;
         default: _fp_print(66); //ERROR
     }
+
+    for (int i = 0; i < NUM_THREADS; i++)
+        thread_cancel(i);
 }
 
 int main0() {
