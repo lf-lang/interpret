@@ -4,10 +4,10 @@
 
 int main() {
     int core_id = read_csr(CSR_COREID);
-    _fp_print(core_id);
+
     uint8_t recv;
-    for (int i = 0; i<10; i++) {
+    while (1) {
         recv=uart_receive();
-        _fp_print(recv);
+        gpo_write_0(recv);
     }
 }
