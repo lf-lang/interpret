@@ -46,8 +46,8 @@ $(VERILOG_RAW):
 	sbt 'run $(CORE_CONFIG) $(SOC_CONFIG) --no-dedup --target-dir $(BUILD_DIR)'
 
 # FPGA Verilog generation
-FPGA_SRC_DIR = $(FPGA_DIR)/generated-src/$(CORE_CONFIG)
-VERILOG_FPGA = $(FPGA_DIR)/generated-src/$(MODULE).v
+# FPGA_SRC_DIR = $(FPGA_DIR)/generated-$(CORE_CONFIG)
+VERILOG_FPGA = $(FPGA_DIR)/$(MODULE).v
 # $(FPGA_SRC_DIR)/$(MODULE).v
 
 # Must provide rules for generating verilog file $(VERILOG)

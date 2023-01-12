@@ -1,6 +1,8 @@
 package interpret
 import chisel3._
 import chisel3.util.experimental.loadMemoryFromFileInline // To load program into ISpm
+import chisel3.experimental.{annotate, ChiselAnnotation}
+import firrtl.annotations.MemorySynthInit
 import flexpret.core.{Core, FlexpretConfiguration, GPIO, HostIO, ISpm}
 
 import wishbone.{S4NoCTopWB}
@@ -45,6 +47,13 @@ class Top(topCfg: TopConfig) extends Module {
   // Termination and printing logic (just for simulation)
   val regCoreDone = RegInit(VecInit(Seq.fill(topCfg.nCores)(false.B)))
   val regCorePrintNext = RegInit(VecInit(Seq.fill(topCfg.nCores)(false.B)))
+
+  // See discussion here: https://www.chisel-lang.org/chisel3/docs/appendix/experimental-features.html
+
+  annotate(new ChiselAnnotation {
+    override def toFirrtl =
+      MemorySynthInit
+  })
 
   for (i <- 0 until topCfg.nCores) {
     // Drove core IO to defaults

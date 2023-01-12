@@ -4,7 +4,7 @@
 #define SYNC_ID_LEN 2
 #define LEN_FIELD_LEN 2
 #define APP_START 0x00001000
-#define DBG
+//#define DBG
 
 #ifdef DBG
 #define DBG_PRINT(x) do {_fp_print(x);} while(0)
@@ -24,15 +24,13 @@ typedef enum {
 } app_recv_states_t;
 
 int main(void) {
-    DBG_PRINT(0);
+    gpo_set_0(1);
     int res = bootloader();
     if (res == 0) {
-        DBG_PRINT(100);
+        gpo_clear_0(0);
         application();
-        DBG_PRINT(101);
     } else {
-        _fp_print(66);
-        _fp_print(res);
+        gpo_set_0(0xF);
         while(1) {}
     }
 }
@@ -48,15 +46,12 @@ int bootloader(void) {
     unsigned int len;
     unsigned int instr;
 
-    _fp_print(1);
-
     while (1) {
         switch (app_recv_state) {
 
             case RECV_SYNC_ID: {
-                DBG_PRINT(0);
+                gpo_set_0(2);
                 recv=uart_receive();
-                DBG_PRINT(recv);
                 recv_buffer[1] = recv_buffer[0];
                 recv_buffer[0] = recv;
 
@@ -65,25 +60,26 @@ int bootloader(void) {
                     idx=0;
                     byte_idx=3;
                     instr = 0;
+                    gpo_clear_0(2);
                 }
                 break;
             }
 
             case RECV_LEN: {
-                DBG_PRINT(1);
+                gpo_set_0(2);
                 recv=uart_receive();
-                DBG_PRINT(recv);
                 recv_buffer[idx++] = recv;
                 if (idx == LEN_FIELD_LEN) {
                     len = recv_buffer[1] << 8 | recv_buffer[0];        
                     app_recv_state = RECV_DATA;
                     idx = 0;
+                    gpo_clear_0(2);
                 }
                 break;
             }
 
             case RECV_DATA: {
-                DBG_PRINT(2);
+                gpo_set_0(4);
                 recv = uart_receive();
                 instr = instr | (((unsigned int) recv) << 8*byte_idx);
                 if (byte_idx-- == 0) {
@@ -94,6 +90,7 @@ int bootloader(void) {
                 }
 
                 if (++idx == len) {
+                    gpo_clear_0(4);
                     app_recv_state = RECV_END_SYNC;
                     idx=0;
                 }
@@ -101,6 +98,7 @@ int bootloader(void) {
             }
 
             case RECV_END_SYNC: {
+                gpo_set_0(8);
                 DBG_PRINT(3);
                 recv = uart_receive();
                 recv_buffer[1] = recv_buffer[0];
@@ -109,6 +107,7 @@ int bootloader(void) {
                 if (++idx == SYNC_ID_LEN) {
                     if (recv_buffer[0] == sync_id[0] && recv_buffer[1] == sync_id[1]) {
                         // Sucessfully received the program
+                        gpo_clear_0(8);
                         return 0;
                     }
                     else {
