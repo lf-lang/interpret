@@ -1,5 +1,6 @@
 #include <flexpret_io.h>
 #include <flexpret_csrs.h>
+#include <flexpret_time.h>
 
 int main() {
     _fp_print(1);
