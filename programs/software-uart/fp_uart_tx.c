@@ -1,17 +1,11 @@
 #include <stdint.h>
 #include <flexpret_io.h>
+#include "fp_uart.h"
 
 #define BILLION 1000000000UL
 
-// FIXME: What is a more elegant way of storing meta-data (_ns_per_bit and _mask) "hidden" from the user?
-typedef struct {
-    int pin;
-    int baud;
-    int _ns_per_bit;
-    uint32_t _mask;
-} uart_tx_t;
 
-void uart_tx_init(uart_tx_t *uart) {
+void uart_tx_init(uart_config_t *uart) {
     // Calculate nsec per bit
     uart->_ns_per_bit = BILLION/uart->baud;
 
@@ -22,7 +16,7 @@ void uart_tx_init(uart_tx_t *uart) {
     gpo_set_0(uart->_mask);
 }
 
-void uart_tx_send(uart_tx_t *uart, char byte) {
+void uart_tx_send(uart_config_t *uart, char byte) {
     // Start bit
     unsigned int next_event = rdtime();
     gpo_clear_0(uart->_mask);
@@ -43,7 +37,7 @@ void uart_tx_send(uart_tx_t *uart, char byte) {
 }
 
 int main() {
-    uart_tx_t uart = {
+    uart_config_t uart = {
         1, 115200,0,0
     };
     uart_tx_init(&uart);
