@@ -21,8 +21,6 @@ int main() {
         default: _fp_print(66); //ERROR
     }
 
-    for (int i = 0; i < NUM_THREADS; i++)
-        thread_cancel(i);
 }
 
 int main0() {
