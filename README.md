@@ -1,5 +1,7 @@
 # InterPRET
 
+InterPRET is a multicore FlexPRET architecture that uses a time-predictable Network on Chip (NoC) for the communication between FlexPRET cores.
+
 ## Getting started
 
 #### Building a quad-core InterPRET emulator
