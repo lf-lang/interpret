@@ -36,7 +36,7 @@ static int send_main(uint32_t receiver) {
         "nop\n\t"
         "nop\n\t"
         "li t5, 42\n\t"  // Set noc data to 42
-        "sw t5, 8(t4)\n\t" // FIXME: Data must be written first? Why? Is it Hardware Bug?
+        "sw t5, 8(t4)\n\t" // NOTE: Data must be written first. This is by design.
         "li t5, 0x04\n\t"
         "sw t5, 4(t4)\n\t"
     );
