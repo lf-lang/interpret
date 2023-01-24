@@ -5,8 +5,7 @@ import chisel3.experimental.{annotate, ChiselAnnotation}
 import firrtl.annotations.MemorySynthInit
 import flexpret.core.{Core, FlexpretConfiguration, GPIO, HostIO, ISpm}
 
-import wishbone.{S4NoCTopWB}
-import s4noc.Config
+import s4noc.{Config, S4NoCTop}
 
 
 case class TopConfig(
@@ -28,20 +27,28 @@ class TopIO(topCfg: TopConfig) extends Bundle {
 
 class Top(topCfg: TopConfig) extends Module {
   val io = IO(new TopIO(topCfg))
-  // Flexpret cores and wb masters
+  // Flexpret cores
   val cores = for (i <- 0 until topCfg.nCores) yield Module(new Core(topCfg.coreCfgs(i)))
+
+  // Create WB master, UART and bus. One per FlexPRET core
   val wbMasters = for (i <- 0 until topCfg.nCores) yield Module(new WishboneMaster(topCfg.coreCfgs(i).busAddrBits)(topCfg.coreCfgs(i)))
   val wbUarts = for (i <- 0 until topCfg.nCores) yield Module(new WishboneUart()(topCfg))
   val wbBuses = for (i <- 0 until topCfg.nCores) yield {
     Module(new WishboneBus(
       masterWidth =  topCfg.coreCfgs(i).busAddrBits,
-      deviceWidths = Seq(4,4) // NOC width=4 and Uart width = 4
+      deviceWidths = Seq(4) // Uart width = 4
+    ))
+  }
+  // Create the core-bus onto which WBMaster and NoC is connected
+  val interpretBuses = for (i <- 0 until topCfg.nCores) yield {
+    Module(new InterpretBus(
+      masterWidth = topCfg.coreCfgs(i).busAddrBits,
+      deviceWidths = Seq(5,4) // WB_Master needs 5 bits (addresses 0,4,8,12,16). NoC starts at address 32.
     ))
   }
 
   // NoC with n ports
-  val noc = Module(new S4NoCTopWB(Config(4, 2, 2, 2, 32)))
-  noc.io.wbPorts.map(_.setDefaults)
+  val noc = Module(new S4NoCTop(Config(4, 2, 2, 2, 32)))
 
 
   // Termination and printing logic (just for simulation)
@@ -60,14 +67,16 @@ class Top(topCfg: TopConfig) extends Module {
     cores(i).io.dmem.driveDefaultsFlipped()
     cores(i).io.imem_bus.driveDefaultsFlipped()
     cores(i).io.int_exts.foreach(_ := false.B)
-    // Connect to wbM master
-    cores(i).io.bus <> wbMasters(i).busIO
+
+    // Connect core to interpretBus
+    cores(i).io.bus <> interpretBuses(i).io.coreIf
+
+    // Connect the WBm and the NoC to the interPret bus
+    interpretBuses(i).io.deviceIfs(0) <> wbMasters(i).busIO
+    interpretBuses(i).io.deviceIfs(1).connectS4NoC(noc.io.cpuPorts(i))
 
     // Connect WbMaster to WbBus
     wbMasters(i).wbIO <> wbBuses(i).io.wbMaster
-
-    // Connect WbBus to NOC
-    wbBuses(i).io.wbDevices(0) <> noc.io.wbPorts(i)
 
     // Connect WbBus to Uart
     wbBuses(i).io.wbDevices(1) <> wbUarts(i).io.port
@@ -75,8 +84,10 @@ class Top(topCfg: TopConfig) extends Module {
     // Connect all cores to uart input
     wbUarts(i).ioUart.rx := io.uart.rx
 
-    // Tie off GPIO inputs
-    cores(i).io.gpio.in.map(_ := false.B)
+    // All the cores can read/write to the same GPIOs.
+    // FIXME: Maybe not a good idea
+    io.gpio.in <> cores(i).io.gpio.in
+    io.gpio.out <> cores(i).io.gpio.out
 
     // Initialize instruction scratchpad memory
     loadMemoryFromFileInline(cores(i).imem.get.ispm, "ispm.mem")
@@ -98,10 +109,6 @@ class Top(topCfg: TopConfig) extends Module {
     }
   }
 
-  // TODO: What about one GPIO port per core?
-  // Only core0 gets GPIO wired out
-  io.gpio.in <> cores(0).io.gpio.in
-  io.gpio.out <> cores(0).io.gpio.out  
 
   // Only core0 can write on the uart
   io.uart.tx := wbUarts(0).ioUart.tx

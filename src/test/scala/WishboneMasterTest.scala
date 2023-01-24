@@ -79,7 +79,7 @@ class WishboneTest extends AnyFlatSpec with ChiselScalatestTester {
 
   val conf = FlexpretConfiguration(threads = 1, flex = false,
     InstMemConfiguration(bypass = true, sizeKB = 4),
-    dMemKB = 256, mul = false, features = "all")
+    dMemKB = 256, mul = false, features = "all",0)
 
   def wb = new WishboneMaster(conf.busAddrBits)(conf)
 
