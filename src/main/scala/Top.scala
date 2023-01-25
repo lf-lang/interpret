@@ -55,13 +55,6 @@ class Top(topCfg: TopConfig) extends Module {
   val regCoreDone = RegInit(VecInit(Seq.fill(topCfg.nCores)(false.B)))
   val regCorePrintNext = RegInit(VecInit(Seq.fill(topCfg.nCores)(false.B)))
 
-  // See discussion here: https://www.chisel-lang.org/chisel3/docs/appendix/experimental-features.html
-
-  annotate(new ChiselAnnotation {
-    override def toFirrtl =
-      MemorySynthInit
-  })
-
   for (i <- 0 until topCfg.nCores) {
     // Drove core IO to defaults
     cores(i).io.dmem.driveDefaultsFlipped()
@@ -88,9 +81,6 @@ class Top(topCfg: TopConfig) extends Module {
     // FIXME: Maybe not a good idea
     io.gpio.in <> cores(i).io.gpio.in
     io.gpio.out <> cores(i).io.gpio.out
-
-    // Initialize instruction scratchpad memory
-    loadMemoryFromFileInline(cores(i).imem.get.ispm, "ispm.mem")
 
     // Catch termination from core
     when(cores(i).io.host.to_host === "hdeaddead".U) {

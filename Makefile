@@ -4,6 +4,8 @@ FPGA_DIR = fpga
 EMULATOR_DIR = emulator
 SCRIPTS_DIR = flexpret/scripts
 BUILD_DIR = build
+RESOURCE_DIR = flexpret/src/main/resources
+
 
 
 # Compiler options.
@@ -83,10 +85,11 @@ remulator: clean emulator
 clean: integration-clean
 	rm -rf $(FPGA_DIR)/generated-src
 	rm -rf $(FPGA_DIR)/build
+	rm -rf $(FPGA_DIR)/*.v
 	rm -f $(EMULATOR_BIN)
 	rm -rf ./build
 	rm -rf emulator/obj_dir
-	rm -f emulator/$(MODULE).sim.v
+	rm -f emulator/*.v
 	rm -rf out
 	
 
