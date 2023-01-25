@@ -21,3 +21,4 @@ emulator/obj_dir
 **/*.fir
 **/*.app
 **/*.binary.txt
+**/test_res.txt
