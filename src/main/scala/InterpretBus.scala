@@ -57,12 +57,23 @@ class InterpretBus(
   io.coreIf.setDefaults()
   io.deviceIfs.map(_.setDefaultsFlipped())
 
+  // Register for storing which device was accessed. In the following cycle we
+  // will use this register to connect the right `data_out` to the core
+  val deviceRespPtr = RegInit(0.U(log2Ceil(deviceWidths.length).W))
+
   var devAddr = Seq(0)
   for ((dev,i) <- io.deviceIfs.zipWithIndex) {
     // Calculate address range of this device
     devAddr = devAddr ++ Seq(devAddr.last + (1 << deviceWidths(i)))
     dev.addr := io.coreIf.addr
     dev.data_in := io.coreIf.data_in
+
+    // Connect the data_out from the device back to the core.
+    //  This connects the data_out from the device which was accessed in
+    //  the previous cycle. A 1CC access latency is assumed
+    when(deviceRespPtr === i.U) {
+      io.coreIf.data_out := dev.data_out
+    }
 
     // Only connect rest of wires when the device is being addressed
     when(io.coreIf.enable
@@ -71,7 +82,10 @@ class InterpretBus(
     ) {
       dev.enable := io.coreIf.enable
       dev.write := io.coreIf.write
-      io.coreIf.data_out := dev.data_out
+
+      // Update the deviceRespPtr. Such that next cycle we will connect
+      //  this devices' `data_out` to the core
+      deviceRespPtr := i.U
     }
   }
 }

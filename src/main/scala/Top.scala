@@ -79,7 +79,7 @@ class Top(topCfg: TopConfig) extends Module {
     wbMasters(i).wbIO <> wbBuses(i).io.wbMaster
 
     // Connect WbBus to Uart
-    wbBuses(i).io.wbDevices(1) <> wbUarts(i).io.port
+    wbBuses(i).io.wbDevices(0) <> wbUarts(i).io.port
 
     // Connect all cores to uart input
     wbUarts(i).ioUart.rx := io.uart.rx
