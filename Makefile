@@ -16,7 +16,7 @@ TEST_DIR = programs/tests
 # -----------------------------------------------------------------------------
 # Core and target configuration
 # -----------------------------------------------------------------------------
-THREADS ?= 1
+THREADS ?= 8
 FLEXPRET ?= false
 ISPM_KBYTES ?= 256
 DSPM_KBYTES ?= 256
@@ -61,11 +61,15 @@ include $(EMULATOR_DIR)/emulator.mk
 # Alias
 emulator: $(EMULATOR_BIN)
 
+include programs/
 
 # -----------------------------------------------------------------------------
 #  Tests
 # -----------------------------------------------------------------------------
-test:
+test: unit-tests integration-tests
+	sbt 'test'
+
+unit-tests:
 	sbt 'test'
 
 # -----------------------------------------------------------------------------

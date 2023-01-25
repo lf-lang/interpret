@@ -1,5 +1,5 @@
 build:
-	riscv-compile.sh 1 ispm hello_noc.c
+	riscv-compile.sh 1 ispm ie.c
 
 clean:
 	riscv-clean.sh
