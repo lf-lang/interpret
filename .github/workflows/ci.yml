@@ -21,15 +21,15 @@ jobs:
         run: sudo apt install verilator -y
       - name: Install RISC-V toolchain
         run: |
-        wget https://github.com/stnolting/riscv-gcc-prebuilt/releases/download/rv32i-4.0.0/riscv32-unknown-elf.gcc-12.1.0.tar.gz /tmp
-        sudo mkdir /opt/riscv
-        sudo tar -xzf /tmp/riscv32-unknown-elf.gcc-12.1.0.tar.gz -C /opt/riscv/
-        echo "PATH=$PATH:/opt/riscv/bin" >> $GITHUB_ENV
+          wget https://github.com/stnolting/riscv-gcc-prebuilt/releases/download/rv32i-4.0.0/riscv32-unknown-elf.gcc-12.1.0.tar.gz /tmp
+          sudo mkdir /opt/riscv
+          sudo tar -xzf /tmp/riscv32-unknown-elf.gcc-12.1.0.tar.gz -C /opt/riscv/
+          echo "PATH=$PATH:/opt/riscv/bin" >> $GITHUB_ENV
       - name: Build InterPRET
         run: |
-        make emulator N_CORES=4 THREADS=8 FLEX=true
-        root=$(pwd)
-        echo "PATH=$PATH:$root/flexpret/scripts/c:$root/emulator" >> $GITHUB_ENV
+          make emulator N_CORES=4 THREADS=8 FLEX=true
+          root=$(pwd)
+          echo "PATH=$PATH:$root/flexpret/scripts/c:$root/emulator" >> $GITHUB_ENV
       - name: Build InterPRET
       - name: Run unit-tests
         run: make test
