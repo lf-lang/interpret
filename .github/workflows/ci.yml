@@ -30,6 +30,5 @@ jobs:
           make emulator N_CORES=4 THREADS=8 FLEX=true
           root=$(pwd)
           echo "PATH=$PATH:$root/flexpret/scripts/c:$root/emulator" >> $GITHUB_ENV
-      - name: Build InterPRET
       - name: Run unit-tests
         run: make test
