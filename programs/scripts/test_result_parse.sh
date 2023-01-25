@@ -7,7 +7,7 @@ echo "ERROR: Test program did not terminate properly"
 exit -1
 fi
 
-if grep --quiet "666666666" $1; then
+if grep --quiet "ERROR:" $1; then
 echo "ERROR: Test assertion failed"
 exit -1
 fi
