@@ -19,3 +19,5 @@ emulator/obj_dir
 **/*.dump
 **/fp-emu
 **/*.fir
+**/*.app
+**/*.binary.txt
