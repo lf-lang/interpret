@@ -14,5 +14,6 @@ int main() {
     unsigned int pre = rdtime();
     delay_for(10000);
     unsigned int post = rdtime();
-    _fp_print(post-pre);
+    unsigned int diff = post-pre;
+    ASSERT(diff < 11000);
 }
