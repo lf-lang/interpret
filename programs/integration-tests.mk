@@ -14,9 +14,10 @@ TEST_RESULTS = $(patsubst $(TEST_DIR)/%,$(TEST_DIR)/%/test_res.txt,$(TEST_SRCS))
 integration-tests: $(TEST_RESULTS)
 	@echo FINISHED
 
+# For all TEST_SRCS, go into the directory. Build the test program 
+# run the emulator on it (so env.bash must be called). And parse results 
 $(TEST_DIR)/%/test_res.txt: $(TEST_DIR)/%
 	@echo Executing $^
-	@mkdir -p $(TEST_RES_DIR)
 	@cd $^; make rebuild
 	@cd $^; if ! (fp-emu > test_res.txt 2>&1); then continue; fi
 
