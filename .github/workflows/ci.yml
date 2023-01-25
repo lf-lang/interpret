@@ -32,4 +32,6 @@ jobs:
           root=$(pwd)
           echo "PATH=$PATH:$root/flexpret/scripts/c:$root/emulator" >> $GITHUB_ENV
       - name: Run unit-tests
-        run: make test
+        run: make unit-tests
+      - name: Run integration tests
+        run: make integrations-tests
