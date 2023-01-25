@@ -16,7 +16,7 @@ TEST_DIR = programs/tests
 # -----------------------------------------------------------------------------
 # Core and target configuration
 # -----------------------------------------------------------------------------
-THREADS ?= 1
+THREADS ?= 8
 FLEXPRET ?= false
 ISPM_KBYTES ?= 256
 DSPM_KBYTES ?= 256
@@ -62,12 +62,16 @@ include $(EMULATOR_DIR)/emulator.mk
 emulator: $(EMULATOR_BIN)
 
 
+# Integration tests
+include programs/integration-tests.mk
+
 # -----------------------------------------------------------------------------
 #  Tests
 # -----------------------------------------------------------------------------
-test:
+unit-tests:
 	sbt 'test'
 
+test: unit-tests integration-tests
 # -----------------------------------------------------------------------------
 #  Cleanup
 # -----------------------------------------------------------------------------
@@ -76,7 +80,7 @@ test:
 remulator: clean emulator
 
 # Clean the emulator and the generated source.
-clean:
+clean: integration-clean
 	rm -rf $(FPGA_DIR)/generated-src
 	rm -rf $(FPGA_DIR)/build
 	rm -f $(EMULATOR_BIN)
@@ -87,7 +91,7 @@ clean:
 	
 
 # Clean for all configurations, targets, and test outputs.
-cleanall:
+cleanall: integration-clean
 	rm -rf $(FPGA_DIR)/generated-src
 	rm -rf $(FPGA_DIR)/build
 	rm -f $(EMULATOR_BIN)
@@ -101,4 +105,4 @@ cleanall:
 	rm -rf test_run_dir
 	cd $(TEST_DIR) && $(MAKE) clean
 
-.PHONY: run fpga emulator remulator firrtl_raw verilog_raw clean cleanall test
+.PHONY: run fpga emulator remulator firrtl_raw verilog_raw clean cleanall test unit-tests
