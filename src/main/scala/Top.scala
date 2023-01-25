@@ -99,7 +99,13 @@ class Top(topCfg: TopConfig) extends Module {
       }
       regCoreDone(i) := true.B
     }
-    
+
+    // Catch abort from core
+    when(cores(i).io.host.to_host === "hdeadbeef".U) {
+        printf(cf"ERROR: Core-${i} aborted simulation\n")
+        assert(false.B, "Program aborted!")
+    }
+
     // Handle printfs
     when(cores(i).io.host.to_host === "hbaaabaaa".U) {
       regCorePrintNext(i) := true.B
