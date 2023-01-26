@@ -47,9 +47,17 @@ class Top(topCfg: TopConfig) extends Module {
     ))
   }
 
-  // NoC with n ports
-  val noc = Module(new S4NoCTop(Config(4, 2, 2, 2, 32)))
+  // Normally InterPRET requires 2x2, 3x3, 4x4 etc cores. But we also support the edge case of
+  //  have a single core. We then make a NoC with 4 ports and just drive the remaining 3 to defaults
+  val nNocPorts = if (topCfg.nCores == 1) 4 else topCfg.nCores
+  val noc = Module(new S4NoCTop(Config(nNocPorts, 2, 2, 2, 32)))
 
+  for (i <- 0 until nNocPorts) {
+    noc.io.cpuPorts(i).wrData := 0.U
+    noc.io.cpuPorts(i).wr := false.B
+    noc.io.cpuPorts(i).rd := false.B
+    noc.io.cpuPorts(i).address := 0.U
+  }
 
   // Termination and printing logic (just for simulation)
   val regCoreDone = RegInit(VecInit(Seq.fill(topCfg.nCores)(false.B)))
