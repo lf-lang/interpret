@@ -1,10 +1,13 @@
+#include <stdbool.h>
+
 #include "flexpret_io.h"
 #include "flexpret_uart.h"
+#include <flexpret_assert.h>
 
 #define SYNC_ID_LEN 2
 #define LEN_FIELD_LEN 2
 #define APP_START 0x00001000
-//#define DBG
+#define DBG
 
 #ifdef DBG
 #define DBG_PRINT(x) do {_fp_print(x);} while(0)
@@ -23,16 +26,26 @@ typedef enum {
     FAULT
 } app_recv_states_t;
 
-int main(void) {
-    gpo_set_0(1);
-    int res = bootloader();
-    if (res == 0) {
-        gpo_clear_0(0);
-        application();
-    } else {
-        gpo_set_0(0xF);
-        while(1) {}
+void main(void) {
+    uint32_t hartid = read_hartid();
+    int bootloading_done = 0;
+    if (hartid == 0) {
+        gpo_set_0(1);
+        int res = bootloader();
+        if (res == 0) {
+            gpo_clear_0(0);
+            bootloading_done=1;
+            application();
+            return;
+        } else {
+            gpo_set_0(0xF);
+            ASSERT(false);
+            while(1) {}
+        }
     }
+    while(bootloading_done != 1) {}
+    application();
+    return;
 }
 
 int bootloader(void) {
@@ -50,8 +63,10 @@ int bootloader(void) {
         switch (app_recv_state) {
 
             case RECV_SYNC_ID: {
+                DBG_PRINT(1);
                 gpo_set_0(2);
                 recv=uart_receive();
+                DBG_PRINT(recv);
                 recv_buffer[1] = recv_buffer[0];
                 recv_buffer[0] = recv;
 
@@ -66,8 +81,10 @@ int bootloader(void) {
             }
 
             case RECV_LEN: {
+                DBG_PRINT(2);
                 gpo_set_0(2);
                 recv=uart_receive();
+                DBG_PRINT(recv);
                 recv_buffer[idx++] = recv;
                 if (idx == LEN_FIELD_LEN) {
                     len = recv_buffer[1] << 8 | recv_buffer[0];        
@@ -83,6 +100,8 @@ int bootloader(void) {
                 recv = uart_receive();
                 instr = instr | (((unsigned int) recv) << 8*byte_idx);
                 if (byte_idx-- == 0) {
+                    DBG_PRINT(3);
+                    DBG_PRINT(app_ptr);
                     DBG_PRINT(instr);
                     *(app_ptr++) = instr;
                     instr = 0;
@@ -98,8 +117,8 @@ int bootloader(void) {
             }
 
             case RECV_END_SYNC: {
+                DBG_PRINT(4);
                 gpo_set_0(8);
-                DBG_PRINT(3);
                 recv = uart_receive();
                 recv_buffer[1] = recv_buffer[0];
                 recv_buffer[0] = recv;
