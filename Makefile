@@ -31,7 +31,6 @@ N_CORES ?= 4
 CORE_CONFIG := $(THREADS)t$(if $(findstring true, $(FLEXPRET)),f)-$(ISPM_KBYTES)i-$(DSPM_KBYTES)d$(if $(findstring true, $(MUL)),-mul)-$(SUFFIX)
 SOC_CONFIG := $(N_CORES)
 
-
 # Default will build target and selected programs.
 all: $(TARGET)
 
@@ -84,7 +83,7 @@ remulator: clean emulator
 clean: integration-clean
 	rm -rf $(FPGA_DIR)/generated-src
 	rm -rf $(FPGA_DIR)/build
-	rm -rf $(FPGA_DIR)/*.v
+	rm -rf $(FPGA_DIR)/interpret.v
 	rm -f $(EMULATOR_BIN)
 	rm -rf ./build
 	rm -rf emulator/obj_dir
