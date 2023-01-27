@@ -85,10 +85,6 @@ class Top(topCfg: TopConfig) extends Module {
     // Connect all cores to uart input
     wbUarts(i).ioUart.rx := io.uart.rx
 
-    // All the cores can read/write to the same GPIOs.
-    // FIXME: Maybe not a good idea
-    io.gpio.in <> cores(i).io.gpio.in
-    io.gpio.out <> cores(i).io.gpio.out
 
     // Catch termination from core
     when(cores(i).io.host.to_host === "hdeaddead".U) {
@@ -113,6 +109,12 @@ class Top(topCfg: TopConfig) extends Module {
     }
   }
 
+  // All the cores can read/write to the same GPIOs.
+  // FIXME: Maybe not a good idea
+  for (i <- 0 until topCfg.coreCfgs(0).gpiPortSizes.length) {
+    cores.map(_.io.gpio.in(i) := io.gpio.in(i))
+    io.gpio.out(i) := cores.map(_.io.gpio.out(i)).reduce(_|_)
+  }
 
   // Only core0 can write on the uart
   io.uart.tx := wbUarts(0).ioUart.tx
