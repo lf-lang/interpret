@@ -84,6 +84,7 @@ clean: integration-clean
 	rm -rf $(FPGA_DIR)/generated-src
 	rm -rf $(FPGA_DIR)/build
 	rm -rf $(FPGA_DIR)/interpret.v
+	rm -rf $(FPGA_DIR)/DualPortBram.v
 	rm -f $(EMULATOR_BIN)
 	rm -rf ./build
 	rm -rf emulator/obj_dir
@@ -94,6 +95,8 @@ clean: integration-clean
 cleanall: integration-clean
 	rm -rf $(FPGA_DIR)/generated-src
 	rm -rf $(FPGA_DIR)/build
+	rm -rf $(FPGA_DIR)/interpret.v
+	rm -rf $(FPGA_DIR)/DualPortBram.v
 	rm -f $(EMULATOR_BIN)
 	rm -rf ./build
 	rm -rf emulator/obj_dir
