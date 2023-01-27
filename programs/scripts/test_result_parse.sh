@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Verify that the program started
 echo "Parsing results from test: $1"
 

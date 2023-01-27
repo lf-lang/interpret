@@ -30,7 +30,7 @@ jobs:
         run: |
           make emulator N_CORES=4 THREADS=8 FLEX=true TRACE=0
           root=$(pwd)
-          echo "PATH=$PATH:$root/flexpret/scripts/c:$root/emulator" >> $GITHUB_ENV
+          echo "PATH=$PATH:$root/flexpret/scripts/c:$root/emulator:$root/programs/scripts" >> $GITHUB_ENV
       - name: Run unit-tests
         run: make unit-tests
       - name: Run integration tests

@@ -11,7 +11,7 @@ TEST_SRCS= \
 TEST_RESULTS = $(patsubst $(TEST_DIR)/%,$(TEST_DIR)/%/test_res.txt,$(TEST_SRCS))
 
 .PHONY: integration-tests
-integration-tests: $(TEST_RESULTS)
+integration-tests: $(TEST_RESULTS) bootloader-test
 	@echo FINISHED
 
 # For all TEST_SRCS, go into the directory. Build the test program 
@@ -20,9 +20,12 @@ $(TEST_DIR)/%/test_res.txt: $(TEST_DIR)/%
 	@echo Executing $^
 	@cd $^; make rebuild
 	@cd $^; if ! (fp-emu > test_res.txt 2>&1); then continue; fi
+	@test_result_parse.sh $@
 
-
-	@bash programs/scripts/test_result_parse.sh $@
+bootloader-test:
+	@cd programs/bootloader; riscv-clean.sh; make; compile_app.sh 1 hello hello.c
+	@cd programs/bootloader; if ! (fp-emu hello.app > test_res.txt 2>&1); then continue; fi
+	@cd programs/bootloader; test_result_parse.sh test_res.txt
 
 .PHONY: integration-clean
 # Loop through all the test dirs and do `make clean` which should remove all

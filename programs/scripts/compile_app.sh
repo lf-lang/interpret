@@ -30,3 +30,6 @@ xxd -c 4 -e $2.binary.txt > $2.mem.orig
 
 # Delete the temporary binary file.
 rm $2.binary.txt
+
+# Serialize
+serialize_app.py $2.mem $2.app
