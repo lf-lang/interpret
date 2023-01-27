@@ -20,8 +20,8 @@ TEST_DIR = programs/tests
 # -----------------------------------------------------------------------------
 THREADS ?= 8
 FLEXPRET ?= false
-ISPM_KBYTES ?= 256
-DSPM_KBYTES ?= 256
+ISPM_KBYTES ?= 16
+DSPM_KBYTES ?= 16
 MUL ?= false
 SUFFIX ?= all
 N_CORES ?= 4
@@ -30,7 +30,6 @@ N_CORES ?= 4
 # Note: '?=' not used so string is only constructed once.
 CORE_CONFIG := $(THREADS)t$(if $(findstring true, $(FLEXPRET)),f)-$(ISPM_KBYTES)i-$(DSPM_KBYTES)d$(if $(findstring true, $(MUL)),-mul)-$(SUFFIX)
 SOC_CONFIG := $(N_CORES)
-
 
 # Default will build target and selected programs.
 all: $(TARGET)
@@ -63,7 +62,6 @@ include $(EMULATOR_DIR)/emulator.mk
 # Alias
 emulator: $(EMULATOR_BIN)
 
-
 # Integration tests
 include programs/integration-tests.mk
 
@@ -85,13 +83,12 @@ remulator: clean emulator
 clean: integration-clean
 	rm -rf $(FPGA_DIR)/generated-src
 	rm -rf $(FPGA_DIR)/build
-	rm -rf $(FPGA_DIR)/*.v
+	rm -rf $(FPGA_DIR)/interpret.v
 	rm -f $(EMULATOR_BIN)
 	rm -rf ./build
 	rm -rf emulator/obj_dir
 	rm -f emulator/*.v
 	rm -rf out
-	
 
 # Clean for all configurations, targets, and test outputs.
 cleanall: integration-clean
