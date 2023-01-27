@@ -19,9 +19,9 @@ TEST_DIR = programs/tests
 # Core and target configuration
 # -----------------------------------------------------------------------------
 THREADS ?= 8
-FLEXPRET ?= false
-ISPM_KBYTES ?= 256
-DSPM_KBYTES ?= 256
+FLEXPRET ?= true
+ISPM_KBYTES ?= 16
+DSPM_KBYTES ?= 16
 MUL ?= false
 SUFFIX ?= all
 N_CORES ?= 4
@@ -63,7 +63,6 @@ include $(EMULATOR_DIR)/emulator.mk
 # Alias
 emulator: $(EMULATOR_BIN)
 
-
 # Integration tests
 include programs/integration-tests.mk
 
@@ -91,7 +90,6 @@ clean: integration-clean
 	rm -rf emulator/obj_dir
 	rm -f emulator/*.v
 	rm -rf out
-	
 
 # Clean for all configurations, targets, and test outputs.
 cleanall: integration-clean

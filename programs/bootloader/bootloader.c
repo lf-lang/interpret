@@ -7,7 +7,7 @@
 #define SYNC_ID_LEN 2
 #define LEN_FIELD_LEN 2
 #define APP_START 0x00001000
-#define DBG
+// #define DBG
 
 #ifdef DBG
 #define DBG_PRINT(x) do {_fp_print(x);} while(0)
@@ -28,13 +28,18 @@ typedef enum {
 
 void main(void) {
     uint32_t hartid = read_hartid();
+    DBG_PRINT(hartid);
     int bootloading_done = 0;
     if (hartid == 0) {
+        DBG_PRINT(22);
         gpo_set_0(1);
         int res = bootloader();
         if (res == 0) {
             gpo_clear_0(0);
+            DBG_PRINT(42);
+            DBG_PRINT(42);
             bootloading_done=1;
+            DBG_PRINT(*((uint32_t *) APP_START));
             application();
             return;
         } else {
@@ -43,7 +48,9 @@ void main(void) {
             while(1) {}
         }
     }
+    DBG_PRINT(33);
     while(bootloading_done != 1) {}
+    DBG_PRINT(43);
     application();
     return;
 }

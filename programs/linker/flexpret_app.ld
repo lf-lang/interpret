@@ -1,4 +1,3 @@
-
 OUTPUT_ARCH("riscv")
 
 MEMORY
