@@ -20,7 +20,7 @@ btl.binary.txt: btl.riscv
 
 
 btl.riscv: bootloader.c
-	$(CC) -I$(LIB_DIR)/include -T $(LINKER_SCRIPT) -DBOOTLOADER=1 -DNUM_THREADS=4 -Xlinker -Map=output.map -g -static -O0 -march=rv32i -mabi=ilp32 -nostartfiles --specs=nosys.specs -o btl.riscv $(LIB_DIR)/start.S $(LIB_DIR)/syscalls.c $(LIB_DIR)/startup.c $(LIB_DIR)/flexpret_exceptions.c bootloader.c
+	$(CC) -I$(LIB_DIR)/include -T $(LINKER_SCRIPT) -DBOOTLOADER=1 -DNUM_THREADS=4 -DCPU_FREQ=50000000 -Xlinker -Map=output.map -g -static -O0 -march=rv32i -mabi=ilp32 -nostartfiles --specs=nosys.specs -o btl.riscv $(LIB_DIR)/start.S $(LIB_DIR)/syscalls.c $(LIB_DIR)/startup.c $(LIB_DIR)/flexpret_exceptions.c bootloader.c
 
 
 clean:
