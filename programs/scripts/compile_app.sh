@@ -16,7 +16,7 @@ OBJCOPY=riscv32-unknown-elf-objcopy
 EMU=fp-emu
 
 # Compile
-$CC -I$LIB_DIR/include -T $LINKER_SCRIPT -Xlinker -Map=output.map -DNUM_THREADS=$1 -g -static -O0 -march=rv32i -mabi=ilp32 -nostartfiles --specs=nosys.specs -o $2.riscv $LIB_DIR/start.S $LIB_DIR/syscalls.c $LIB_DIR/tinyalloc/tinyalloc.c $LIB_DIR/startup.c $LIB_DIR/flexpret_thread.c $LIB_DIR/flexpret_lock.c $LIB_DIR/flexpret_exceptions.c "${@:3}"
+$CC -I$LIB_DIR/include -T $LINKER_SCRIPT -Xlinker -Map=output.map -DNUM_THREADS=$1 -DCPU_FREQ=50000000 -g -static -O0 -march=rv32i -mabi=ilp32 -nostartfiles --specs=nosys.specs -o $2.riscv $LIB_DIR/start.S $LIB_DIR/syscalls.c $LIB_DIR/tinyalloc/tinyalloc.c $LIB_DIR/startup.c $LIB_DIR/flexpret_thread.c $LIB_DIR/flexpret_lock.c $LIB_DIR/flexpret_exceptions.c $LIB_DIR/ip_uart.c "${@:3}"
 
 # Generate dump file.
 $OBJDUMP -S -d $2.riscv > $2.dump

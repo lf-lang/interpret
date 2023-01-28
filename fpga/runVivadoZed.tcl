@@ -1,6 +1,6 @@
 # TCL script automating synthesis, implementation and programming of a Zedboard
 puts "Running synthesis, implementation and programming script for Zedboard"
-set outputDir ./vivado/
+set outputDir ./vivado
 set projectName interpret_zedboard
 file mkdir $outputDir/$projectName
 create_project -force -part xc7z020clg484-1 $outputDir/$projectName
@@ -36,7 +36,7 @@ wait_on_runs impl_1
 
 # Export Bitstream
 puts "Exporting bitstream"
-file copy -force /$outputDir/$projectName/$projectName.runs/impl_1/zedboardTop.bit zedboard.bit
+file copy -force $outputDir/$projectName.runs/impl_1/zedboardTop.bit zedboard.bit
 
 puts "Programming Zedboard"
 # Programming attached Zedboard
