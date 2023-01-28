@@ -205,11 +205,11 @@ set_property -dict {PACKAGE_PIN U14 IOSTANDARD LVCMOS33} [get_ports {LEDS[7]}]; 
 # ----------------------------------------------------------------------------
 # User Push Buttons - Bank 34
 # ---------------------------------------------------------------------------- 
-set_property -dict {PACKAGE_PIN P16 IOSTANDARD LVCMOS33} [get_ports {BTNS[0]}];  # "BTNC"
-set_property -dict {PACKAGE_PIN R16 IOSTANDARD LVCMOS33} [get_ports {BTNS[1]}];  # "BTND"
-set_property -dict {PACKAGE_PIN N15 IOSTANDARD LVCMOS33} [get_ports {BTNS[2]}];  # "BTNL"
-set_property -dict {PACKAGE_PIN R18 IOSTANDARD LVCMOS33} [get_ports {BTNS[3]}];  # "BTNR"
-set_property -dict {PACKAGE_PIN T18 IOSTANDARD LVCMOS33} [get_ports {BTNS[4]}];  # "BTNU"
+set_property -dict {PACKAGE_PIN P16 IOSTANDARD LVCMOS33} [get_ports {RESET}];  # "BTNC"
+set_property -dict {PACKAGE_PIN R16 IOSTANDARD LVCMOS33} [get_ports {BTNS[0]}];  # "BTND"
+set_property -dict {PACKAGE_PIN N15 IOSTANDARD LVCMOS33} [get_ports {BTNS[1]}];  # "BTNL"
+set_property -dict {PACKAGE_PIN R18 IOSTANDARD LVCMOS33} [get_ports {BTNS[2]}];  # "BTNR"
+set_property -dict {PACKAGE_PIN T18 IOSTANDARD LVCMOS33} [get_ports {BTNS[3]}];  # "BTNU"
 
 # ----------------------------------------------------------------------------
 # USB OTG Reset - Bank 34

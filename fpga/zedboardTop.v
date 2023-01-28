@@ -4,7 +4,7 @@ module zedboardTop(
   input CLK_100MHZ_FPGA,
   output [7:0] LEDS,
   input [7:0] SWS,
-  input [4:0] BTNS,
+  input [3:0] BTNS,
   output UART_TX,
   input UART_RX,
   input [3:0] JBI,

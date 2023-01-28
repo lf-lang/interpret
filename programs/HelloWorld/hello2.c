@@ -14,7 +14,7 @@ int main() {
         case 1: main1(); break;
         case 2: main2(); break;
         case 3: main3(); break;
-        default: _fp_print(66); //ERROR
+        default: gpo_set_0(256); //ERROR
     }
 }
 
@@ -28,9 +28,9 @@ int main1() {
 }
 
 int main2() {
-    gpo_set_0(3);
+    gpo_set_0(4);
 }
 
 int main3() {
-    gpo_set_0(4);
+    gpo_set_0(8);
 }
