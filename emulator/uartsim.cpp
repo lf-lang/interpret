@@ -15,7 +15,8 @@ using namespace std;
 #endif
 
 typedef enum {
-    UART_RX_IDLE = 0,
+    UART_RX_INACTIVE = 0,
+    UART_RX_IDLE,
     UART_RX,
     UART_RX_DONE
 } uart_rx_state_t;
@@ -44,14 +45,10 @@ int tx_write_idx=0;
 uart_tx_state_t tx_state;
 
 
-
-
-
 fstream app_file;   
 void uartsim_init(const char * app_mem_file) {
 
-    rx_state = UART_RX_IDLE;
-    // For now, just hardcoded. In the future. read from file
+    rx_state = UART_RX_INACTIVE;
     if (app_mem_file != "") {
         DBG_PRINT("Opening file");
         app_file.open(app_mem_file, ios::in | ios::binary);
@@ -64,9 +61,18 @@ void uartsim_init(const char * app_mem_file) {
 
 
 // A simple UART receiver which prints out the received data to the terminal
-void uartsim_print_rx(unsigned char* rxd) {
-    if (rx_state == UART_RX_IDLE) {
-        if (*rxd == 0) {
+static int read_pin(int* port, int pin) {
+    return (*port) & (1 << pin);
+}
+
+void uartsim_print_rx(int* port, int pin) {
+    
+    if (rx_state == UART_RX_INACTIVE) {
+        if (read_pin(port, pin) == 1) {
+            rx_state = UART_RX_IDLE;
+        }
+    } else if (rx_state == UART_RX_IDLE) {
+        if (read_pin(port, pin) == 0) {
             rx_state = UART_RX;
             rx_bit_count = 0;
             rx_tick_count = ticks_per_bit + ticks_per_bit/2;
@@ -74,7 +80,7 @@ void uartsim_print_rx(unsigned char* rxd) {
     } else if (rx_state == UART_RX) {
         if (--rx_tick_count == 0) {
             // Sample
-            rx = rx | (*rxd << rx_bit_count);
+            rx = rx | (read_pin(port, pin) << rx_bit_count);
             
             rx_bit_count++;
             rx_tick_count = ticks_per_bit;
