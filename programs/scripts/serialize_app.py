@@ -32,6 +32,10 @@ with open(args.input, "r") as fr:
         for l in lines:
             DBG_PRINT(f"Line={l} hex_string={bytearray.fromhex(l)}")
             bs = bytes.fromhex(l)
+            if len(bs) < 4:
+                while len(bs) < 4:
+                    bs = bytes.fromhex("00") + bs
+            
             assert(len(bs) == 4)
             fw.write(bs)
         fw.write(syncField)

@@ -17,6 +17,6 @@ int main() {
     unsigned int post = rdtime();
     unsigned int diff = post-pre;
     _fp_print(diff);
-    ASSERT(diff < 20000);
+    assert(diff < 20000);
     _fp_print(14);
 }

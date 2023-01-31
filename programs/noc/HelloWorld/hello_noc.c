@@ -19,7 +19,7 @@ int main() {
         case 1: main1(); break;
         case 2: main2(); break;
         case 3: main3(); break;
-        default: ASSERT(false); //ERROR
+        default: assert(false); //ERROR
     }
 
 }
@@ -45,7 +45,7 @@ int main2() {
     for (int i=0; i<10; i++) {
         read = noc_receive();
         _fp_print(read);
-        ASSERT(read == send_values0[i]);
+        assert(read == send_values0[i]);
     }
 }
 
@@ -54,6 +54,6 @@ int main3() {
     for (int i=0; i<10; i++) {
         read = noc_receive();
         _fp_print(read);
-        ASSERT(read == send_values1[i]);
+        assert(read == send_values1[i]);
     }
 }
