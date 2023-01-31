@@ -14,23 +14,23 @@ int main() {
         case 1: main1(); break;
         case 2: main2(); break;
         case 3: main3(); break;
-        default: gpo_set_0(256); //ERROR
+        default: gpo_set(0, 256); //ERROR
     }
 }
 
 
 int main0() {
-    gpo_set_0(1);
+    gpo_set(0, 1);
 }
 
 int main1() {
-    gpo_set_0(2);
+    gpo_set(0, 2);
 }
 
 int main2() {
-    gpo_set_0(4);
+    gpo_set(0, 4);
 }
 
 int main3() {
-    gpo_set_0(8);
+    gpo_set(0, 8);
 }

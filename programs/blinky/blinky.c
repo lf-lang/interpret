@@ -11,7 +11,7 @@ int main() {
     if (core_id == 0) {
         unsigned int i=0;
         while(1) {
-            gpo_write_0(i++);
+            gpo_write(0, i++);
             delay_for(BLINK_PERIOD);
         }
     }

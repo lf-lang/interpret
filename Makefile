@@ -19,7 +19,7 @@ TEST_DIR = programs/tests
 # Core and target configuration
 # -----------------------------------------------------------------------------
 THREADS ?= 4
-FLEXPRET ?= false
+FLEXPRET ?= true
 ISPM_KBYTES ?= 16
 DSPM_KBYTES ?= 16
 MUL ?= false
