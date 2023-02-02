@@ -44,7 +44,6 @@ int main2() {
     uint32_t read;
     for (int i=0; i<10; i++) {
         read = noc_receive();
-        _fp_print(read);
         assert(read == send_values0[i]);
     }
 }
@@ -53,7 +52,6 @@ int main3() {
     uint32_t read;
     for (int i=0; i<10; i++) {
         read = noc_receive();
-        _fp_print(read);
         assert(read == send_values1[i]);
     }
 }

@@ -3,7 +3,7 @@ OUTPUT_ARCH("riscv")
 MEMORY
 {
     ROM (rx)  : ORIGIN = 0x00000000, LENGTH = 4K
-    RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 16K
+    RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 4K
 }
 
 SECTIONS
@@ -12,6 +12,7 @@ SECTIONS
     {
         *(.isr_vector)
         *(.text*)
+        *(.rodata*)
         *(.eh_frame*)
 
         /* All text end */
@@ -23,7 +24,6 @@ SECTIONS
     {
         __data_start__ = .;
         *(.data .data.*)
-        *(.rodata*)
         *(.gnu.linkonce.d.*)
     } > RAM AT> ROM
 

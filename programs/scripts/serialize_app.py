@@ -7,7 +7,7 @@ parser.add_argument("output", help="Output serialized app")
 
 args = parser.parse_args()
 
-DBG=True
+DBG=False
 
 
 def DBG_PRINT(str):
@@ -15,6 +15,8 @@ def DBG_PRINT(str):
         print(str)
 
 SYNC_ID = 0xC0DE
+
+print("Running serialize_app.py")
 
 with open(args.input, "r") as fr:
     lines = fr.readlines()
@@ -40,3 +42,5 @@ with open(args.input, "r") as fr:
             fw.write(bs)
         fw.write(syncField)
         
+
+print("serialize_app.py Done")

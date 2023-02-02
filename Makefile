@@ -20,8 +20,8 @@ TEST_DIR = programs/tests
 # -----------------------------------------------------------------------------
 THREADS ?= 4
 FLEXPRET ?= true
-ISPM_KBYTES ?= 16
-DSPM_KBYTES ?= 16
+ISPM_KBYTES ?= 24
+DSPM_KBYTES ?= 24
 MUL ?= false
 SUFFIX ?= all
 N_CORES ?= 4
