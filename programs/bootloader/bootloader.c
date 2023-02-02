@@ -1,6 +1,7 @@
 #include <stdbool.h>
 
 #include "flexpret_io.h"
+#include "flexpret_stdio.h"
 #include "flexpret_uart.h"
 #include <flexpret_assert.h>
 
@@ -14,7 +15,6 @@
 #else
 #define DBG_PRINT(x) do {} while(0)
 #endif
-typedef void (*func_t)(void);
 void (*application)(void) = (void (*)())APP_START;
 int bootloader(void);
 
@@ -29,7 +29,6 @@ typedef enum {
 void main(void) {
     uint32_t hartid = read_hartid();
     DBG_PRINT(hartid);
-    int bootloading_done = 0;
     if (hartid == 0) {
         DBG_PRINT(22);
         gpo_set(0, 1);
@@ -38,19 +37,13 @@ void main(void) {
             gpo_clear(0, 0);
             DBG_PRINT(42);
             DBG_PRINT(42);
-            bootloading_done=1;
             DBG_PRINT(*((uint32_t *) APP_START));
-            application();
-            return;
         } else {
             gpo_set(0, 0xF);
             assert(false);
             while(1) {}
         }
     }
-    DBG_PRINT(33);
-    while(bootloading_done != 1) {}
-    DBG_PRINT(43);
     application();
     return;
 }
