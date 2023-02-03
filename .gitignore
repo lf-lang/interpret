@@ -20,3 +20,4 @@ emulator/obj_dir
 **/*.orig
 **/*.dump
 **/fp-emu
+**/asm-gen/

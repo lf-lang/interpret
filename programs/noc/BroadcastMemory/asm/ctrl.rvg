@@ -1,0 +1,75 @@
+[mu [(program)]
+[def (condition!) [assertify [lam [(x)] [[hasattr {condition}] x]] {a condition}]]
+[def (<) [lam [(rs1 reg!) (rs2 reg!)]
+  [[addattr {condition}]
+    [lam [(label frag!)]
+      [pair {
+        blt rs1 rs2 label
+      } {
+        bgeu rs1 rs2 label
+      }]]]]]
+[def (branch3) [lam [(condition condition!) (instrs block!)]
+  [def (assembly) {
+    [id { [id [[condition {DONE}] false]] } ]
+    [id instrs]
+    DONE:
+  }]
+  [[unsafe-assert-exact-cycles {3}] assembly]]]
+[def (unroll) [lam [(n num!) (body block!)]
+  [[unsafe-assert-exact-cycles [* n [cycles? body]]]
+    [[[fold_range {1} {0} n] {}]
+    [lam [(acc) (_)] {
+      [id acc]
+      [id body]
+    }]]]]]
+[def (for) [lam [
+    (start reg!) (stop reg!)
+    (step num! [>! {0}])
+    (body block!)]
+  [def (addition-and-branching-cycles) {4}]
+  [def (total-cycles [lamof num!]) [lam [(num-iterations)] [-
+    [* num-iterations
+      [+ [cycles? body] addition-and-branching-cycles]]
+    {2}]]]
+  [def (assembly) {
+    LOOP:
+    [id body]
+    addi start start step
+    blt start stop LOOP
+  }]
+  [pair assembly total-cycles]]]
+[def (for_startup+iterations*<body+4>-2) [lam [
+    (counter reg!) (clobber reg!)
+    (start num!) (stop num! [>! start]) (step num! [>! {0}])
+    (body block!)]
+  [def (stopreg) clobber]
+  [def (startup) {
+    li counter start
+    li stopreg stop
+  }]
+  [def (num-iterations) [/ [- start stop] [- {0} step]]]
+  [def (assembly,cycles pair!) [for counter stopreg step body]]
+  {
+    [id startup]
+    [[unsafe-assert-exact-cycles
+        [[assembly,cycles false] num-iterations]]
+      [assembly,cycles true]]
+  }]]
+[def (prologue-epilogue!) [->
+  [lamof [∘ num! [∘ [>=! {0}] [<! {12}]]]]
+  block!]]
+[def (stackpush) [lam [(s|t|a frag!)] [lam [(n)]
+  [[[fold_range {1} {0} n] {addi sp sp [* {4} n]}]
+    [lam [(acc block!) (k num!)] {
+      sw [id s|t|a][id k] [* {4} k](sp)
+      [id acc]
+    }]]]]]
+[def (stackpop) [lam [(s|t|a frag!)] [lam [(n)]
+  [[[fold_range {1} {0} n] {addi sp sp [* {-4} n]}]
+    [lam [(acc block!) (k num!)] {
+      [id acc]
+      lw [id s|t|a][id k] [* {4} k](sp)
+    }]]]]]
+[def (prologue prologue-epilogue!) [stackpush {s}]]
+[def (epilogue prologue-epilogue!) [stackpop {s}]]
+[program]]
