@@ -1,0 +1,7 @@
+[mu [(program)]
+[def (fp-print) [lam [(r input!) (c0 clobber!)] {
+    li c0 0xbaaabaaa
+    csrw 0x51e c0
+    csrw 0x51e r
+}]]
+[program]]

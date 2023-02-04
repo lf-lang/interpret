@@ -1,11 +1,8 @@
-[stdlib [mu []
-[[println {.global hello}]]
-[[println {.section .text}]]
-[[println {
+[stdlib [mu [] [ctrl [mu []
+[[file {hello} {
 hello:
     li t1 42
     li t0 0xbaaabaaa
     csrw 0x51e t0
     csrw 0x51e t1
-}]]
-[[println {.end}]]]]
+}]]]]]]

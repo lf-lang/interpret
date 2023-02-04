@@ -40,4 +40,8 @@
 [def (∘) [lam [(a [lam! {1}]) (b)] [applierify-varargs [lam [(applier)]
   [a [applier b]]]]]]
 [def (;;) [lam [(doc)] id]]
+[def (/*) [lam [(ignored)] {}]]
+[def (input!) reg!]
+[def (output!) reg!]
+[def (clobber!) reg!]
 [program]]

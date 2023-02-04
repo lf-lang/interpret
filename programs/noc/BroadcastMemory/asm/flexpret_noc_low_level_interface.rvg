@@ -1,0 +1,244 @@
+[mu [(program)]
+[def (quintet!) [-> [lamof [cycles! {2}] [cycles! {1}] [cycles! {1}] input! input!] [cycles! {5}]]]
+[def (northeast-quintet quintet)
+  [(asm2cycles) (asm1cycle0) (asm1cycle0) (to-send-reg) (noc-base-address)] {
+    sw to-send 0(noc-base-address-reg)
+    asm2cycles
+    asm1cycle0
+    asm1cycle1
+  }]
+[def (north-quintet quintet!)
+  [(asm2cycles) (asm1cycle0) (asm1cycle0) (to-send-reg) (noc-base-address)] {
+    asm2cycles
+    sw to-send 0(noc-base-address-reg)
+    asm1cycle0
+    asm1cycle1
+  }]
+[def (east-quintet quintet!)
+  [(asm2cycles) (asm1cycle0) (asm1cycle0) (to-send-reg) (noc-base-address)] {
+    asm2cycles
+    asm1cycle0
+    sw to-send 0(noc-base-address-reg)
+    asm1cycle1
+  }]
+[def (load-noc-base-address [-> [lamof output!] [cycles! {1}]) [lam [(r)] {
+  li r 0x80000000
+  }]]
+[;; {
+The instruction immediately following `sync5` is able to store a word
+into the zeroth TDM slot (northwest) in a single-threaded setting.
+It takes 9-13 cycles to synchronize. The 0-4 is fundamental and the remaining
+9 cycles are overhead.}]
+[def (sync5) [lam [(noc-base-address clobber!) (c0 clobber!) (c1 clobber!) (c2 clobber!) (c3 clobber!)] {
+  li c0 1
+  li c1 2
+  li c2 3
+  [load-noc-base-address noc-base-address]
+  lw c3 32(noc-base-address)
+  beq c3 c0 DONE_SYNCHRONIZING
+  beq c3 zero DONE_SYNCHRONIZING
+  beq c3 c2 DONE_SYNCHRONIZING
+  beq c3 c1 DONE_SYNCHRONIZING
+  DONE_SYNCHRONIZING:
+  }]]
+[;; {
+Broadcast the value stored in reg to all other cores. The instruction immediately
+following BROADCAST_SYNCED is able to store into the zeroth TDM slot.
+This assumes that the current thread is synchronized to the TDM schedule.}]
+[def (broadcast-synced-with-instructions) [lam [
+    (noc-base-address input!)
+    (reg input!)
+    (i0 [cycles! {1}])
+    (i1 [cycles! {1}])] {
+  sw reg 0(noc-base-address)
+  [id i0]
+  sw reg 0(noc-base-address)
+  sw reg 0(noc-base-address)
+  [id i1]}]]
+[def (broadcast-synced) [lam [(noc-base-address input!) (reg input!)]
+  [broadcast-synced-with-instructions {nop} {nop}]]]
+[def (load-noc-core-base-address) [lam [(noc-core-base-address output!) (sending-core-reg input!) (c0 clobber!)]] {
+  [load-noc-base-address noc-core-base-address]
+  slli c0 sending-core-reg 2
+  add noc-core-base-address c0 noc-core-base-address
+  }]
+[def (block-on-flit-from-core) [lam [(noc-core-base-address input!) (c0 clobber!)] {
+  BLOCKING_READ_POLL:
+  lw c0 16(noc-core-base-address)
+  beq zero c0 BLOCKING_READ_POLL
+  }]]
+[def (blocking-read) [lam [(noc-core-base-address clobber!) (read-to-reg output!) (sending-core-reg input!)] {
+  [load-noc-core-base-address noc-core-base-address sending-core-reg read-to-reg]
+  [block-on-flit-from-core noc-core-base-address read-to-reg]
+  lw read-to-reg 0(noc-core-base-address)
+  }]]
+[def (or-validity-of-noc-data) [lam [
+    (noc-base-address-reg input!)
+    (accumulator-reg input! output!)
+    (offset num!)
+    (c0 clobber!)] {
+  lw c0 offset(noc-base-address-reg)
+  or accumulator-reg accumulator-reg c0
+  }]]
+[def (read-and-fail-if-tag-bit-is-1) [lam [
+    (noc-base-address-reg input!)
+    (read-to-reg output!)
+    (sending-core-reg input!)
+    (result-reg output!)
+    (tag-bit-mask input!)
+    (fail-label frag!)] {
+  [blocking-read noc-base-address-reg read-to-reg sending-core-reg]
+  and result-reg read-to-reg tag-bit-mask
+  bnez result-reg fail-label
+  }]]
+[;; {
+@brief Try to send the number of words specified by n_words_reg.
+@param n_words_reg The number of words to send.
+@param result_reg 0 if successful, 1 if one of the potential message receivers has already tried
+to send a message before this even tries to send a message, 0x80000000 if one of the potential
+message receivers tries to send a message after this tries to send a message (so awkward! who
+gets to talk first?)
+@param initialize_asm Assembly code for preparing to send words, e.g. by loading the words into
+the register file. Must take 2 cycles (mod 5).
+@param send_words_asm Assembly code for sending the words rapidly. Must never miss a TDM slot!
+May assume that the preceding code has already taken care of synchronization. Must preserve
+synchronization. Must set n_words_reg to hold the number of words in the next contiguous sequence,
+with the top bit set high if the length of prepare_for_next_send_words_asm is not exactly 11
+cycles.
+@param prepare_for_next_send_words_asm Prepare for the next run of send_words_asm.
+@param noc_base_address Register that will hold the NoC base address. No assumptions are made
+about the original value held in this register (the NoC base address will be written into it
+regardless).
+The remaining parameters (e.g., SENDING_NORTHEAST_MACRO) must be either TRUE_MACRO or
+FALSE_MACRO.
+}]
+[def (send-n-words) [lam [
+  (n-words-reg input! clobber! [;; {only the tag bit is clobbered}])
+  (result-reg output!)
+  (sending-northeast bool!)
+  (sending-north     bool!)
+  (sending-east      bool!)
+  (sending-to-0  bool!)
+  (sending-to-1  bool!)
+  (sending-to-2  bool!)
+  (sending-to-3  bool!)
+  (initialize-asm block!)
+  (send-words-asm block!)
+  (prepare-for-next-send-words-asm block!)
+  (noc-base-address clobber!)
+  (c0 clobber!) (c1 clobber!) (c2 clobber!) (c3 clobber!) (c4 clobber!)
+] {
+  [load-noc-base-address noc-base-address]
+  add result-reg zero zero
+  [sending-to-0 [or-validity-of-noc-data noc-base-address result-reg {16} c1]]
+  [sending-to-1 [or-validity-of-noc-data noc-base-address result-reg {20} c1]]
+  [sending-to-2 [or-validity-of-noc-data noc-base-address result-reg {24} c1]]
+  [sending-to-3 [or-validity-of-noc-data noc-base-address result-reg {28} c1]]
+  bnez result-reg END  ;; fail with error code 1
+  [sync5 noc-base-address c1 c2 c3 c4]
+  li c1 0x80000000  ;; Set the top bit as a tag bit. If u wanna send so many words that this creates ambiguity, then u have a bigger problem on your hands
+  or n-words-reg n-words-reg c1
+  [/* [def (send-num-words-or-nop) [lam [(? bool!)] [? {sw n-words-reg 0(noc-base-address)} {nop}]]]]
+  [send-num-words-or-nop sending-north    ]
+  [send-num-words-or-nop sending-east     ]
+  li c3 1
+  [send-num-words-or-nop sending-northeast]
+  [/* [def (blocking-read-or-not) [lam [(? bool!) (receiving-core input!)] [?
+    [read-and-fail-if-tag-bit-is-1 noc-base-address c2 receiving-core result-reg c1 {END}]
+    {}]]]]
+  [blocking-read-or-not sending-to-0 {zero}]
+  [blocking-read-or-not sending-to-1 c3]
+  li c3 2
+  [blocking-read-or-not sending-to-2 c3]
+  li c3 3
+  [blocking-read-or-not sending-to-3 c3]
+  [id initialize-asm]
+  SENDING_SYNC_WORD:
+  [/* [def (sync-word) [lam [(? bool!)] {sw zero 0(noc-base-address)}]]]
+  [sync-word sending-northeast]
+  nop
+  [sync-word sending-north    ]
+  [sync-word sending-east     ]
+  nop
+  SEND_WORDS_ASM:
+  [id send-words-asm]
+  [send-num-words-or-nop sending-northeast]
+  nop
+  [send-num-words-or-nop sending-north    ]
+  [send-num-words-or-nop sending-east     ]
+  beqz n-words-reg END
+  [id prepare-for-next-send-words-asm]
+  bge n-words-reg zero SEND_WORDS_ASM
+  jal zero SENDING_SYNC_WORD
+  END:
+  }]]
+[def (mul4-2cycles [cycles! {2}]) [lam [(in-reg input!) (out-reg output)]] {
+  [mul4 in-reg out-reg]
+  nop
+  }]
+[;; {
+@brief Read the number of words specified by the sender.
+@param DIRECTION_QUINTET_MACRO The macro corresponding to the direction of the sender from the
+receiver.
+@param MUL_BY_RECEIVE_WORDS_PERIOD_2CYCLES Assembly that takes an in_reg and an out_reg
+and sets the out_reg to the number of instructions in each 5-cycle subsequence of
+receive_words_asm.
+@param offset_numeric_literal 36 plus (4 times the number of instructions in
+preparatory asm). This will be 48 unless one provides instructions that
+cause stalls, such as loads, branches, or jumps.
+@param hex_for_12_bit_distance_from_auipc_to_end 3-digit hex (no 0x prefix) for
+offset_numeric_literal plus the offset of receive_words_asm.
+@param sending_core_reg Input: A register specifying the sending core. Clobbered.
+@param receive_words_asm Assembly that receives the sent words. Must read in its first cycle, and
+exactly every 5 cycles thereafter!
+@param noc_base_address Output: A register that will be set to the base address of the NoC
+corresponding to the given core.
+The remaining registers are all clobbers -- they have descriptive names, but they are not really
+API except insofar as they are clobbered. t6 is also clobbered, and receive_words_asm cannot use
+t6. The only clobber that receive_words_asm should use is clobber4.
+}]
+[def (read-n-words) [lam [
+  (direction-quintet quintet!)
+  (mul-by-receive-words-period [cycles! {2}])
+  (offset-numeric-literal num!)
+  (hex-for-12-bit-distance-from-auipc-to-end frag!)
+  (sending-core-reg input!)
+  (receive-words-asm block!)
+  (noc-base-address output!)
+  (packet-size-reg clobber!) (jalr-word-reg clobber!) (replaced-instruction-reg clobber!) (c4 clobber!)
+] {
+  [blocking-read noc-base-address c4 sending-core-reg]
+  [mul-by-receive-words-period c4 packet-size-reg]
+  slli packet-size-reg packet-size-reg 2
+  [sync5 sending-core-reg t6 jalr-word-reg replaced-instrucction-reg c4]
+  auipc t6 0
+  add packet-size-reg t6 packet-size-reg
+  li jalr-word-reg 0x[id hex-for-12-bit-distance-from-auipc-to-end]F8067
+  nop
+  [direction-quintet
+    {lw replaced-instruction-reg 52(packet-size-reg)}
+    {sw jalr-word-reg 52(packet-size-reg)}
+    {nop}
+    {zero}
+    noc-base-address]
+  WAIT_FOR_SYNC_WORD:
+  [block-on-flit-from-core noc-base-address c4]
+  nop
+  nop
+  RECEIVE_WORDS:
+  [id receive-words-asm]
+  sw replaced-instruction-reg 52(packet-size-reg)
+  nop
+  lw c4 0(noc-base-address)
+  beqz c4 END
+  [mul-by-receive-words-period c4 replaced-instruction-reg]
+  slli packet-size-reg replaced-instruction-reg 2
+  add packet-size-reg t6 packet-size-reg
+  lw replaced-instruction-reg 52(packet-size-reg)
+  sw jalr-word-reg 52(packet-size-reg)
+  nop
+  blt c4 zero WAIT_FOR_SYNC_WORD
+  jal zero RECEIVE_WORDS
+  END:
+  }]]
+[program]]
