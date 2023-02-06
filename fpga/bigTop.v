@@ -1,3 +1,4 @@
+// Toplevel module for the hypothetical "big" fpga. Just used to get synthesis results.
 `timescale 1ns / 1ps
 
 module bigTop(
