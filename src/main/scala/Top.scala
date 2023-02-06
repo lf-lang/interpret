@@ -43,7 +43,8 @@ class Top(topCfg: TopConfig) extends Module {
   val interpretBuses = for (i <- 0 until topCfg.nCores) yield {
     Module(new InterpretBus(
       masterWidth = topCfg.coreCfgs(i).busAddrBits,
-      deviceWidths = Seq(5,4) // WB_Master needs 5 bits (addresses 0,4,8,12,16). NoC starts at address 32.
+      deviceWidths = Seq(5,4), // WB_Master needs 5 bits (addresses 0,4,8,12,16). NoC starts at address 32.
+      threadBits = topCfg.coreCfgs(i).threadBits
     ))
   }
 
@@ -85,10 +86,6 @@ class Top(topCfg: TopConfig) extends Module {
     // Connect all cores to uart input
     wbUarts(i).ioUart.rx := io.uart.rx
 
-    // All the cores can read/write to the same GPIOs.
-    // FIXME: Maybe not a good idea
-    io.gpio.in <> cores(i).io.gpio.in
-    io.gpio.out <> cores(i).io.gpio.out
 
     // Catch termination from core
     when(cores(i).io.host.to_host === "hdeaddead".U) {
@@ -104,7 +101,7 @@ class Top(topCfg: TopConfig) extends Module {
         assert(false.B, "Program aborted!")
     }
 
-    // Handle printfs
+    // Handle printfss
     when(cores(i).io.host.to_host === "hbaaabaaa".U) {
       regCorePrintNext(i) := true.B
     }.elsewhen(regCorePrintNext(i)) {
@@ -113,6 +110,13 @@ class Top(topCfg: TopConfig) extends Module {
     }
   }
 
+
+  // Drive gpio input of each core to 0 by default
+  cores.map(_.io.gpio.in.map(_ := 0.U))
+  // Only core0 can read/write to top-level GPIOs
+  // FIXME: We should have dedicated IO banks to each core
+  io.gpio.in <> cores(0).io.gpio.in
+  io.gpio.out <> cores(0).io.gpio.out
 
   // Only core0 can write on the uart
   io.uart.tx := wbUarts(0).ioUart.tx

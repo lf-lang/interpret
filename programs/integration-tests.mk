@@ -3,10 +3,12 @@ TEST_DIR:=programs
 TEST_RES_DIR:=$(TEST_DIR)/results
 TEST_SCRIPTS=$(TEST_DIR)/scripts
 TEST_SRCS= \
-	$(TEST_DIR)/DelayUntil \
-	$(TEST_DIR)/InterruptExpire \
+	$(TEST_DIR)/delayUntil \
+	$(TEST_DIR)/interruptExpire \
 	$(TEST_DIR)/noc/HelloWorld \
-	$(TEST_DIR)/noc/PingPong
+	$(TEST_DIR)/noc/PingPong \
+	$(TEST_DIR)/threaded \
+	$(TEST_DIR)/print
 
 TEST_RESULTS = $(patsubst $(TEST_DIR)/%,$(TEST_DIR)/%/test_res.txt,$(TEST_SRCS))
 

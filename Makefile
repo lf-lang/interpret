@@ -18,10 +18,10 @@ TEST_DIR = programs/tests
 # -----------------------------------------------------------------------------
 # Core and target configuration
 # -----------------------------------------------------------------------------
-THREADS ?= 8
+THREADS ?= 4
 FLEXPRET ?= false
-ISPM_KBYTES ?= 16
-DSPM_KBYTES ?= 16
+ISPM_KBYTES ?= 24
+DSPM_KBYTES ?= 24
 MUL ?= false
 SUFFIX ?= all
 N_CORES ?= 4
@@ -71,7 +71,7 @@ include programs/integration-tests.mk
 unit-tests:
 	sbt 'test'
 
-test: unit-tests integration-tests
+test: emulator unit-tests integration-tests
 # -----------------------------------------------------------------------------
 #  Cleanup
 # -----------------------------------------------------------------------------
@@ -84,6 +84,7 @@ clean: integration-clean
 	rm -rf $(FPGA_DIR)/generated-src
 	rm -rf $(FPGA_DIR)/build
 	rm -rf $(FPGA_DIR)/interpret.v
+	rm -rf $(FPGA_DIR)/DualPortBram.v
 	rm -f $(EMULATOR_BIN)
 	rm -rf ./build
 	rm -rf emulator/obj_dir
@@ -94,6 +95,8 @@ clean: integration-clean
 cleanall: integration-clean
 	rm -rf $(FPGA_DIR)/generated-src
 	rm -rf $(FPGA_DIR)/build
+	rm -rf $(FPGA_DIR)/interpret.v
+	rm -rf $(FPGA_DIR)/DualPortBram.v
 	rm -f $(EMULATOR_BIN)
 	rm -rf ./build
 	rm -rf emulator/obj_dir

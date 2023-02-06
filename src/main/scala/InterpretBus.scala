@@ -51,11 +51,18 @@ class InterpretBusIO(
 
 class InterpretBus(
   val masterWidth: Int,
-  val deviceWidths: Seq[Int]
+  val deviceWidths: Seq[Int],
+  val threadBits: Int
 ) extends Module {
   val io = IO(new InterpretBusIO(masterWidth, deviceWidths))
   io.coreIf.setDefaults()
   io.deviceIfs.map(_.setDefaultsFlipped())
+
+  // Remove thread ID from address.
+  // FIXME: We might want to use it also? Not sure maybe part of this bus interface is the thread ID?
+  def filterOutThreadBits(addr: UInt): UInt = {
+    addr(masterWidth-threadBits-1,0)
+  }
 
   // Register for storing which device was accessed. In the following cycle we
   // will use this register to connect the right `data_out` to the core
@@ -75,10 +82,14 @@ class InterpretBus(
       io.coreIf.data_out := dev.data_out
     }
 
+    // The is the actual requested address. The thread bits are filtered out
+    // FIXME: The threadID should be part of the interface
+    val reqDevAddr = WireDefault(filterOutThreadBits(io.coreIf.addr))
+
     // Only connect rest of wires when the device is being addressed
     when(io.coreIf.enable
-      && io.coreIf.addr >= devAddr(devAddr.length-2).U
-      && io.coreIf.addr < devAddr.last.U
+      && reqDevAddr >= devAddr(devAddr.length-2).U
+      && reqDevAddr < devAddr.last.U
     ) {
       dev.enable := io.coreIf.enable
       dev.write := io.coreIf.write
