@@ -1,7 +1,8 @@
 
 #  
 # TCL script automating synthesis and resource utilzation print-out
-# on a big FPGA (Virtex-UltraScale VCU110 Evaluation Platform)
+# on a big FPGA. 
+# Pass the name used for config as a command line argument
 puts "Running synthesis, implementation and programming script for BIG fpga"
 set outputDir ./vivado
 set projectName interpret_big
@@ -42,6 +43,7 @@ wait_on_runs synth_1
 open_run synth_1
 
 # Write resource utilization to a file
+report_utilization -hierarchical -file "util_hierarchical_$config.txt"
 report_utilization -file "util_$config.txt"
 
 # close project
