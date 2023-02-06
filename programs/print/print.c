@@ -9,14 +9,8 @@ void main() {
         gpo_set_1(1);
         print_init();
         gpo_set_0(4);
-
-        char str1[] = "Hello World\n";
         print_str("Hello World");
 
-        char str[12] = {'H', 'e', 'l', 'l', 'o', '\0'};
-        for (int i=0; i<5; i++) {
-            _fp_print(str[i]);
-        }
 
         delay_for(1000000);
 
