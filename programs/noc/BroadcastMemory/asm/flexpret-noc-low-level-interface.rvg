@@ -3,26 +3,41 @@
 [def (north-int    ) {8 }]
 [def (east-int     ) {12}]
 [def (quintet!) [-> [lamof [cycles! {2}] [cycles! {1}] [cycles! {1}] input! input!] [cycles! {5}]]]
-[def (northeast-quintet quintet!) [lam
-  [(asm2cycles) (asm1cycle0) (asm1cycle0) (to-send-reg) (noc-base-address)] {
-    sw to-send 0(noc-base-address-reg)
-    asm2cycles
-    asm1cycle0
-    asm1cycle1
+[def (northeast-quintet quintet!) [lam [
+  (asm2cycles [cycles! {2}])
+  (asm1cycle0 [cycles! {1}])
+  (asm1cycle1 [cycles! {1}])
+  (to-send input!)
+  (noc-base-address input!)
+] {
+    sw to-send 0(noc-base-address)
+    [id asm2cycles]
+    [id asm1cycle0]
+    [id asm1cycle1]
   }]]
-[def (north-quintet quintet!) [lam
-  [(asm2cycles) (asm1cycle0) (asm1cycle0) (to-send-reg) (noc-base-address)] {
-    asm2cycles
-    sw to-send 0(noc-base-address-reg)
-    asm1cycle0
-    asm1cycle1
+[def (north-quintet quintet!) [lam [
+  (asm2cycles [cycles! {2}])
+  (asm1cycle0 [cycles! {1}])
+  (asm1cycle1 [cycles! {1}])
+  (to-send input!)
+  (noc-base-address input!)
+] {
+    [id asm2cycles]
+    sw to-send 0(noc-base-address)
+    [id asm1cycle0]
+    [id asm1cycle1]
   }]]
-[def (east-quintet quintet!) [lam
-  [(asm2cycles) (asm1cycle0) (asm1cycle0) (to-send-reg) (noc-base-address)] {
-    asm2cycles
-    asm1cycle0
-    sw to-send 0(noc-base-address-reg)
-    asm1cycle1
+[def (east-quintet quintet!) [lam [
+  (asm2cycles [cycles! {2}])
+  (asm1cycle0 [cycles! {1}])
+  (asm1cycle1 [cycles! {1}])
+  (to-send input!)
+  (noc-base-address input!)
+] {
+    [id asm2cycles]
+    [id asm1cycle0]
+    sw to-send 0(noc-base-address)
+    [id asm1cycle1]
   }]]
 [def (load-noc-base-address [-> [lamof output!] [cycles! {1}]]) [lam [(r)] {
   li r 0x80000000
@@ -128,15 +143,14 @@ FALSE_MACRO.
   (initialize-asm block!)
   (send-words-asm block!)
   (prepare-for-next-send-words-asm block!)
-  (noc-base-address clobber!)
-  (c0 clobber!) (c1 clobber!) (c2 clobber!) (c3 clobber!) (c4 clobber!)
+  (noc-base-address clobber!) (c1 clobber!) (c2 clobber!) (c3 clobber!) (c4 clobber!)
 ] {
   [load-noc-base-address noc-base-address]
   add result-reg zero zero
-  [sending-to-0 [or-validity-of-noc-data noc-base-address result-reg {16} c1]]
-  [sending-to-1 [or-validity-of-noc-data noc-base-address result-reg {20} c1]]
-  [sending-to-2 [or-validity-of-noc-data noc-base-address result-reg {24} c1]]
-  [sending-to-3 [or-validity-of-noc-data noc-base-address result-reg {28} c1]]
+  [sending-to-0 [or-validity-of-noc-data noc-base-address result-reg {16} c1] {}]
+  [sending-to-1 [or-validity-of-noc-data noc-base-address result-reg {20} c1] {}]
+  [sending-to-2 [or-validity-of-noc-data noc-base-address result-reg {24} c1] {}]
+  [sending-to-3 [or-validity-of-noc-data noc-base-address result-reg {28} c1] {}]
   bnez result-reg END  ;; fail with error code 1
   [sync5 noc-base-address c1 c2 c3 c4]
   li c1 0x80000000  ;; Set the top bit as a tag bit. If u wanna send so many words that this creates ambiguity, then u have a bigger problem on your hands
@@ -202,7 +216,7 @@ t6. The only clobber that receive_words_asm should use is clobber4.
 }]
 [def (read-n-words) [lam [
   (direction-quintet quintet!)
-  (mul-by-receive-words-period [cycles! {2}])
+  (mul-by-receive-words-period [-> id [cycles! {2}]])
   (offset-numeric-literal num!)
   (hex-for-12-bit-distance-from-auipc-to-end frag!)
   (sending-core-reg input!)
@@ -213,10 +227,10 @@ t6. The only clobber that receive_words_asm should use is clobber4.
   [blocking-read noc-base-address c4 sending-core-reg]
   [mul-by-receive-words-period c4 packet-size-reg]
   slli packet-size-reg packet-size-reg 2
-  [sync5 sending-core-reg t6 jalr-word-reg replaced-instrucction-reg c4]
+  [sync5 sending-core-reg {t6} jalr-word-reg replaced-instruction-reg c4]
   auipc t6 0
   add packet-size-reg t6 packet-size-reg
-  li jalr-word-reg 0x[id hex-for-12-bit-distance-from-auipc-to-end]F8067
+  li jalr-word-reg [id {0x}][id hex-for-12-bit-distance-from-auipc-to-end]F8067
   nop
   [direction-quintet
     {lw replaced-instruction-reg 52(packet-size-reg)}

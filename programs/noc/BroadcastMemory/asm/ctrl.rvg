@@ -4,9 +4,9 @@
   [[addattr {condition}]
     [lam [(label frag!)]
       [pair {
-        [true-branch] rs1 rs2 label
+        [id true-branch] rs1 rs2 label
       } {
-        [false-branch] rs1 rs2 label
+        [id false-branch] rs1 rs2 label
       }]]]]]]
 [def (<) [make-condition {blt} {bgeu}]]
 [def (>=) [make-condition {bgeu} {blt}]]
@@ -25,14 +25,16 @@
   DONE:
   }]]
 [def (unroll) [lam [(n num!) (body [-> [lamof num!] block!])]
-  [[unsafe-assert-exact-cycles [* n [cycles? body]]]
-    [[[fold_range {1} {0} n] {}]
+    [[[fold-range {1} {0} n] {}]
     [lam [(acc) (_)] {
       [id acc]
       [body n]
-    }]]]]]
+    }]]]]
+[def (repeat~) [lam [(n num!) (body block!)]
+  [unroll n [lam [(_)] body]]]]
 [def (repeat) [lam [(n num!) (body block!)]
-  [unroll [lam [(_)] body]]]]
+  [[unsafe-assert-exact-cycles [* n [cycles? body]]]
+    [repeat~ n body]]]]
 [def (for) [lam [
     (start reg!) (stop reg!)
     (step num! [>! {0}])
@@ -70,13 +72,13 @@
   [lamof [∘ num! [∘ [>=! {0}] [<! {12}]]]]
   block!]]
 [def (stackpush) [lam [(s|t|a frag!)] [lam [(n)]
-  [[[fold_range {1} {0} n] {addi sp sp [* {4} n]}]
+  [[[fold-range {1} {0} n] {addi sp sp [* {4} n]}]
     [lam [(acc block!) (k num!)] {
       sw [id s|t|a][id k] [* {4} k](sp)
       [id acc]
     }]]]]]
 [def (stackpop) [lam [(s|t|a frag!)] [lam [(n)]
-  [[[fold_range {1} {0} n] {addi sp sp [* {-4} n]}]
+  [[[fold-range {1} {0} n] {addi sp sp [* {-4} n]}]
     [lam [(acc block!) (k num!)] {
       [id acc]
       lw [id s|t|a][id k] [* {4} k](sp)

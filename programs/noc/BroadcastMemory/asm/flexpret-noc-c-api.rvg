@@ -7,7 +7,7 @@
 [;; {code related to READ_N_WORDS_AND_PRINT *****************************************************/}]
 
 [def (load-and-print-receiver-body) [lam [(noc-base-address input!) (c0 clobber!) (c1 clobber!)] {
-  [unroll {64} {
+  [repeat {64} {
     lw c0 0(noc-base-address)
     nop
     csrw 0x51e c1
@@ -35,7 +35,7 @@ The remaining registers are all clobbers.
   (c5 clobber!)
 ]
   [def (body) [load-and-print-receiver-body c0 c4 c5]]
-  [read-n-words sender-quintet mul4-2cycles 48, 438, sender-reg body c0 c1 c2 c3 c4]]]
+  [read-n-words sender-quintet mul4-2cycles {48} {438} sender-reg body c0 c1 c2 c3 c4]]]
 
 [def (print-flexpret-noc-c-api-h) [print {
   #define NORTHEAST [id northeast-int]
@@ -48,17 +48,17 @@ The remaining registers are all clobbers.
   [def (sender-quintet) {a1}]
   [def (receive-from-direction-if-applicable) [lam [(direction quintet!)]
     [branch~
-      [== x0 sender-quintet]
+      [== {zero} sender-quintet]
       [read-n-words-and-print direction sender-reg {t0} {t1} {t2} {t3} {t4} {t5}]]]]
   [[file {read_n_words_and_print} {
   read_n_words_and_print:
     [receive-from-direction-if-applicable northeast-quintet]
-    addi sender-quintet [- north-int northeast-int]
+    addi sender-quintet sender-quintet [- north-int northeast-int]
     [receive-from-direction-if-applicable north-quintet]
-    addi sender-quintet [- east-int north-int]
+    addi sender-quintet sender-quintet [- east-int north-int]
     [receive-from-direction-if-applicable east-quintet]
     [branch~
-      [!= x0 sender-quintet]
+      [!= {zero} sender-quintet]
       [fp-print-int {666} {t0} {t1}]]
     jalr zero ra 0
   }]]]]
@@ -71,7 +71,7 @@ The remaining registers are all clobbers.
   (noc-base-address input!)
   (c0 clobber!)
 ] {
-  [repeat {16} {
+  [repeat~ {16} {
     sw countdown-reg 0(noc-base-address)
     addi c0 countdown-reg -1
     sw countdown-reg 0(noc-base-address)
@@ -126,7 +126,7 @@ the value in total_num_words_to_send_reg minus max_sequence_length
   li n-words-reg max-sequence-length-literal
   bge total-num-words-to-send-reg max-sequence-length-reg DONE
   add n-words-reg total-num-words-to-send-reg zero
-  DONE
+  DONE:
   }]]
 [def (broadcast-count-prepare-next-send-asm) [lam [
   (countdown-reg input! output!)
@@ -173,7 +173,7 @@ except the one corresponding to the current core (which does not broadcast to it
     true true true
     sending-to-0 sending-to-1 sending-to-2 sending-to-3
     [initialize-n-words-asm countdown-reg n-words-reg max-sequence-length-reg]
-    [broadcast-count-send-asm n-words-reg countdown-reg noc-base-address clobber3]
+    [broadcast-count-send-asm n-words-reg countdown-reg noc-base-address c3]
     [broadcast-count-prepare-next-send-asm countdown-reg n-words-reg c2]
     noc-base-address c1 c2 c3 c4
     ]
@@ -183,28 +183,26 @@ except the one corresponding to the current core (which does not broadcast to it
   [def (start-count-at) {a1}]
   [def (send-from-direction-if-applicable) [lam [(notfrom0 bool!) (notfrom1 bool!) (notfrom2 bool!) (notfrom3 bool!)]
     [branch~
-      [== x0 current-core]
+      [== {zero} current-core]
       [broadcast-count
         notfrom0
         notfrom1
         notfrom2
         notfrom3
         start-count-at
-        t0 t1 t2 t3 t4 t5 t6 a5]]]]
+        {t0} {t1} {t2} {t3} {t4} {t5} {t6} {a5}]]]]
   [[file {broadcast_count} {
   broadcast_count:
-    [receive-from-direction-if-applicable northeast-quintet]
-    addi sender-quintet [- north-int northeast-int]
-    [receive-from-direction-if-applicable north-quintet]
-    addi sender-quintet [- east-int north-int]
-    [receive-from-direction-if-applicable east-quintet]
-    [branch~
-      [!= x0 sender-quintet]
-      [fp-print-int {666}]]
-    jalr zero ra zero
     [send-from-direction-if-applicable false true true true]
+    addi current-core current-core -1
     [send-from-direction-if-applicable true false true true]
+    addi current-core current-core -1
     [send-from-direction-if-applicable true true false true]
+    addi current-core current-core -1
     [send-from-direction-if-applicable true true true false]
+    [branch~
+      [!= {zero} current-core]
+      [fp-print-int {666} {t0} {t1}]]
+    jalr zero ra 0
   }]]]]
 [program]]]]]]]]]]
