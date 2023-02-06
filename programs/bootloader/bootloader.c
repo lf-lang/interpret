@@ -26,16 +26,20 @@ typedef enum {
     FAULT
 } app_recv_states_t;
 
+// Global flag indicating that bootloading is done
+// hart0 will set it to true. Other harts wait on it
+int boot_done = 0;
+
 void main(void) {
     uint32_t hartid = read_hartid();
+    DBG_PRINT(21);
     DBG_PRINT(hartid);
     if (hartid == 0) {
-        DBG_PRINT(22);
         gpo_set(0, 1);
         int res = bootloader();
         if (res == 0) {
+            boot_done = 1;
             gpo_clear(0, 0);
-            DBG_PRINT(42);
             DBG_PRINT(42);
             DBG_PRINT(*((uint32_t *) APP_START));
         } else {
@@ -44,6 +48,13 @@ void main(void) {
             while(1) {}
         }
     }
+
+    // Remaining harts wait on global flag here
+    while (boot_done == 0) {};
+    DBG_PRINT(22);
+    DBG_PRINT(hartid);
+
+    // Jump to start.S
     application();
     return;
 }
