@@ -62,7 +62,8 @@ void uartsim_init(const char * app_mem_file) {
 
 // A simple UART receiver which prints out the received data to the terminal
 static int read_pin(int* port, int pin) {
-    return (*port) & (1 << pin);
+    int res = (*port) & (1 << pin);
+    return res;
 }
 
 void uartsim_print_rx(int* port, int pin) {
@@ -88,7 +89,7 @@ void uartsim_print_rx(int* port, int pin) {
             if (rx_bit_count == 8) {
                 rx_bit_count=0;
                 rx_state = UART_RX_DONE;
-                rx_tick_count = ticks_per_bit + ticks_per_bit/2;
+                rx_tick_count = ticks_per_bit;
             }
         }
     } else if(rx_state == UART_RX_DONE) {
