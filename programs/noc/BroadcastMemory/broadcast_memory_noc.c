@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <flexpret_io.h>
 #include <noc/flexpret_noc_c_api.h>
+#include "asm-gen/hello.h"
 
 /* | NE | _ | N | E | _ | */
 
@@ -16,7 +17,7 @@ int main2();
 int main3();
 
 int main() {
-    hello();
+    hello(41);
     // int core_id = read_csr(CSR_COREID);
     // switch(core_id) {
     //     case 0: main0(); break;

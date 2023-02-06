@@ -1,0 +1,3 @@
+[[print {
+    void hello(int n);
+}]]

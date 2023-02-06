@@ -1,27 +1,30 @@
 [mu [(program)]
+[def (northeast-int) {0 }]
+[def (north-int    ) {8 }]
+[def (east-int     ) {12}]
 [def (quintet!) [-> [lamof [cycles! {2}] [cycles! {1}] [cycles! {1}] input! input!] [cycles! {5}]]]
-[def (northeast-quintet quintet)
+[def (northeast-quintet quintet!) [lam
   [(asm2cycles) (asm1cycle0) (asm1cycle0) (to-send-reg) (noc-base-address)] {
     sw to-send 0(noc-base-address-reg)
     asm2cycles
     asm1cycle0
     asm1cycle1
-  }]
-[def (north-quintet quintet!)
+  }]]
+[def (north-quintet quintet!) [lam
   [(asm2cycles) (asm1cycle0) (asm1cycle0) (to-send-reg) (noc-base-address)] {
     asm2cycles
     sw to-send 0(noc-base-address-reg)
     asm1cycle0
     asm1cycle1
-  }]
-[def (east-quintet quintet!)
+  }]]
+[def (east-quintet quintet!) [lam
   [(asm2cycles) (asm1cycle0) (asm1cycle0) (to-send-reg) (noc-base-address)] {
     asm2cycles
     asm1cycle0
     sw to-send 0(noc-base-address-reg)
     asm1cycle1
-  }]
-[def (load-noc-base-address [-> [lamof output!] [cycles! {1}]) [lam [(r)] {
+  }]]
+[def (load-noc-base-address [-> [lamof output!] [cycles! {1}]]) [lam [(r)] {
   li r 0x80000000
   }]]
 [;; {
@@ -57,11 +60,11 @@ This assumes that the current thread is synchronized to the TDM schedule.}]
   [id i1]}]]
 [def (broadcast-synced) [lam [(noc-base-address input!) (reg input!)]
   [broadcast-synced-with-instructions {nop} {nop}]]]
-[def (load-noc-core-base-address) [lam [(noc-core-base-address output!) (sending-core-reg input!) (c0 clobber!)]] {
+[def (load-noc-core-base-address) [lam [(noc-core-base-address output!) (sending-core-reg input!) (c0 clobber!)] {
   [load-noc-base-address noc-core-base-address]
   slli c0 sending-core-reg 2
   add noc-core-base-address c0 noc-core-base-address
-  }]
+  }]]
 [def (block-on-flit-from-core) [lam [(noc-core-base-address input!) (c0 clobber!)] {
   BLOCKING_READ_POLL:
   lw c0 16(noc-core-base-address)
@@ -172,10 +175,10 @@ FALSE_MACRO.
   jal zero SENDING_SYNC_WORD
   END:
   }]]
-[def (mul4-2cycles [cycles! {2}]) [lam [(in-reg input!) (out-reg output)]] {
+[def (mul4-2cycles [-> id [cycles! {2}]]) [lam [(in-reg input!) (out-reg output!)] {
   [mul4 in-reg out-reg]
   nop
-  }]
+  }]]
 [;; {
 @brief Read the number of words specified by the sender.
 @param DIRECTION_QUINTET_MACRO The macro corresponding to the direction of the sender from the

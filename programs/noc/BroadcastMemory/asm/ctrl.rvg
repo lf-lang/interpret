@@ -1,27 +1,38 @@
 [mu [(program)]
 [def (condition!) [assertify [lam [(x)] [[hasattr {condition}] x]] {a condition}]]
-[def (<) [lam [(rs1 reg!) (rs2 reg!)]
+[def (make-condition) [lam [(true-branch frag!) (false-branch frag!)] [lam [(rs1 reg!) (rs2 reg!)]
   [[addattr {condition}]
     [lam [(label frag!)]
       [pair {
-        blt rs1 rs2 label
+        [true-branch] rs1 rs2 label
       } {
-        bgeu rs1 rs2 label
-      }]]]]]
-[def (branch3) [lam [(condition condition!) (instrs block!)]
+        [false-branch] rs1 rs2 label
+      }]]]]]]
+[def (<) [make-condition {blt} {bgeu}]]
+[def (>=) [make-condition {bgeu} {blt}]]
+[def (==) [make-condition {beq} {bne}]]
+[def (!=) [make-condition {bne} {beq}]]
+[def (branch3) [lam [(condition condition!) (instrs [cycles! {2}])]
   [def (assembly) {
     [id { [id [[condition {DONE}] false]] } ]
     [id instrs]
     DONE:
   }]
   [[unsafe-assert-exact-cycles {3}] assembly]]]
-[def (unroll) [lam [(n num!) (body block!)]
+[def (branch~) [lam [(condition condition!) (asm block!)] {
+  [[condition {DONE}] false]
+  [id asm]
+  DONE:
+  }]]
+[def (unroll) [lam [(n num!) (body [-> [lamof num!] block!])]
   [[unsafe-assert-exact-cycles [* n [cycles? body]]]
     [[[fold_range {1} {0} n] {}]
     [lam [(acc) (_)] {
       [id acc]
-      [id body]
+      [body n]
     }]]]]]
+[def (repeat) [lam [(n num!) (body block!)]
+  [unroll [lam [(_)] body]]]]
 [def (for) [lam [
     (start reg!) (stop reg!)
     (step num! [>! {0}])

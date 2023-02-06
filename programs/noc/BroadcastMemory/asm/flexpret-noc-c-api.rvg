@@ -1,0 +1,210 @@
+[stdlib [mu [] [ctrl [mu [] [flexpret [mu [] [flexpret-noc-low-level-interface [mu [] [lam [(program)]
+
+[def (northeast-int) {0}]
+[def (north-int) {8}]
+[def (east-int) {12}]
+
+[;; {code related to READ_N_WORDS_AND_PRINT *****************************************************/}]
+
+[def (load-and-print-receiver-body) [lam [(noc-base-address input!) (c0 clobber!) (c1 clobber!)] {
+  [unroll {64} {
+    lw c0 0(noc-base-address)
+    nop
+    csrw 0x51e c1
+    csrw 0x51e c0
+    }]
+  nop
+  }]]
+
+[;; {
+@brief Block and print up to 64 words that were sent by another core using the protocol of
+SEND_N_WORDS.
+@param DIRECTION_QUINTET_MACRO The macro corresponding to the direction of the sender from the
+receiver.
+@param sender_reg A register containing the core ID of the sender.
+The remaining registers are all clobbers.
+}]
+[def (read-n-words-and-print) [lam [
+  (sender-quintet quintet!)
+  (sender-reg input!)
+  (c0 clobber!)
+  (c1 clobber!)
+  (c2 clobber!)
+  (c3 clobber!)
+  (c4 clobber!)
+  (c5 clobber!)
+]
+  [def (body) [load-and-print-receiver-body c0 c4 c5]]
+  [read-n-words sender-quintet mul4-2cycles 48, 438, sender-reg body c0 c1 c2 c3 c4]]]
+
+[def (print-flexpret-noc-c-api-h) [print {
+  #define NORTHEAST [id northeast-int]
+  #define NORTH [id north-int]
+  #define EAST [id east-int]
+  }]]
+
+[def (print-read-n-words-and-print) [lam []
+  [def (sender-reg) {a0}]
+  [def (sender-quintet) {a1}]
+  [def (receive-from-direction-if-applicable) [lam [(direction quintet!)]
+    [branch~
+      [== x0 sender-quintet]
+      [read-n-words-and-print direction sender-reg {t0} {t1} {t2} {t3} {t4} {t5}]]]]
+  [[file {read_n_words_and_print} {
+  read_n_words_and_print:
+    [receive-from-direction-if-applicable northeast-quintet]
+    addi sender-quintet [- north-int northeast-int]
+    [receive-from-direction-if-applicable north-quintet]
+    addi sender-quintet [- east-int north-int]
+    [receive-from-direction-if-applicable east-quintet]
+    [branch~
+      [!= x0 sender-quintet]
+      [fp-print-int {666} {t0} {t1}]]
+    jalr zero ra 0
+  }]]]]
+
+[;; {code related to BROADCAST_COUNT ************************************************************/}]
+
+[def (broadcast-count-send-asm) [lam [
+  (n-words-reg output!)
+  (countdown-reg input! output!)
+  (noc-base-address input!)
+  (c0 clobber!)
+] {
+  [repeat {16} {
+    sw countdown-reg 0(noc-base-address)
+    addi c0 countdown-reg -1
+    sw countdown-reg 0(noc-base-address)
+    sw countdown-reg 0(noc-base-address)
+    bge zero c0 END_BODY
+    sw c0 0(noc-base-address)
+    addi countdown-reg c0 -1
+    sw c0 0(noc-base-address)
+    sw c0 0(noc-base-address)
+    bge zero countdown-reg END_BODY
+    nop
+    nop}]
+  jal zero END
+  END_BODY:
+  nop
+  add n-words-reg zero zero
+  nop
+  END:
+  }]]
+[;; {
+@brief n_words_reg = total_num_words_to_send_reg - max_sequence_length_reg
+> max_sequence_length_reg ? max_sequence_length_reg
+: total_num_words_to_send_reg - max_sequence_length_reg < 0 ? 0
+: total_num_words_to_send_reg - max_sequence_length_reg
+@param total_num_words_to_send_reg Input
+@param n_words_reg Output: Register to be set to closest integer in the range from 0 to max_sequence_length (inclusive) to
+the value in total_num_words_to_send_reg minus max_sequence_length
+@param max_sequence_length_reg Input
+}]
+[def (initialize-n-words-asm) [lam [
+  (total-num-words-to-send-reg input!)
+  (n-words-reg output!)
+  (max-sequence-length-reg input!)
+] {
+  sub n-words-reg total-num-words-to-send-reg max-sequence-length-reg
+  bge n-words-reg zero DONE_WITH_SMALL_CASE
+  add n-words-reg zero zero
+  nop
+  DONE_WITH_SMALL_CASE:
+  bge max-sequence-length-reg n-words-reg DONE_WITH_BIG_CASE
+  add n-words-reg max-sequence-length-reg zero
+  nop
+  DONE_WITH_BIG_CASE:
+  }]]
+[def (cap-at-max-sequence-length) [lam [
+  (total-num-words-to-send-reg input!)
+  (n-words-reg output!)
+  (max-sequence-length-reg output!)
+  (max-sequence-length-literal num!)
+] {
+  addi max-sequence-length-reg zero max-sequence-length-literal
+  li n-words-reg max-sequence-length-literal
+  bge total-num-words-to-send-reg max-sequence-length-reg DONE
+  add n-words-reg total-num-words-to-send-reg zero
+  DONE
+  }]]
+[def (broadcast-count-prepare-next-send-asm) [lam [
+  (countdown-reg input! output!)
+  (n-words-reg input! output!)
+  (max-sequence-length-reg clobber!)
+] {
+  li max-sequence-length-reg 32
+  addi n-words-reg countdown-reg -32
+  bge max-sequence-length-reg n-words-reg DONE
+  li n-words-reg 32
+  nop
+  DONE:
+  andi n-words-reg n-words-reg 1023
+  nop
+  }]]
+
+[;; {
+@brief Broadcast a countdown from countdown_reg to 1 to all other cores.
+@param SENDING_TO_ZERO_MACRO, ..., SENDING_TO_THREE_MACRO: All of these should be TRUE_MACRO
+except the one corresponding to the current core (which does not broadcast to itself).
+@param countdown_reg Input: The first number in the countdown.
+@param result_reg Output: Indicates whether operation succeeded. See SEND_N_WORDS for details.
+@param noc_base_address Clobber.
+}]
+[def (broadcast-count) [lam [
+  (sending-to-0 bool!)
+  (sending-to-1 bool!)
+  (sending-to-2 bool!)
+  (sending-to-3 bool!)
+  (countdown-reg input! clobber!)
+  (result-reg output!)
+  (noc-base-address clobber!)
+  (n-words-reg clobber!)
+  (max-sequence-length-reg clobber!)
+  (c1 clobber!)
+  (c2 clobber!)
+  (c3 clobber!)
+  (c4 clobber!)
+] {
+  [cap-at-max-sequence-length countdown-reg n-words-reg max-sequence-length-reg {32}]
+  [send-n-words
+    n-words-reg
+    result-reg
+    true true true
+    sending-to-0 sending-to-1 sending-to-2 sending-to-3
+    [initialize-n-words-asm countdown-reg n-words-reg max-sequence-length-reg]
+    [broadcast-count-send-asm n-words-reg countdown-reg noc-base-address clobber3]
+    [broadcast-count-prepare-next-send-asm countdown-reg n-words-reg c2]
+    noc-base-address c1 c2 c3 c4
+    ]
+  }]]
+[def (print-broadcast-count) [lam []
+  [def (current-core) {a0}]
+  [def (start-count-at) {a1}]
+  [def (send-from-direction-if-applicable) [lam [(notfrom0 bool!) (notfrom1 bool!) (notfrom2 bool!) (notfrom3 bool!)]
+    [branch~
+      [== x0 current-core]
+      [broadcast-count
+        notfrom0
+        notfrom1
+        notfrom2
+        notfrom3
+        start-count-at
+        t0 t1 t2 t3 t4 t5 t6 a5]]]]
+  [[file {broadcast_count} {
+  broadcast_count:
+    [receive-from-direction-if-applicable northeast-quintet]
+    addi sender-quintet [- north-int northeast-int]
+    [receive-from-direction-if-applicable north-quintet]
+    addi sender-quintet [- east-int north-int]
+    [receive-from-direction-if-applicable east-quintet]
+    [branch~
+      [!= x0 sender-quintet]
+      [fp-print-int {666}]]
+    jalr zero ra zero
+    [send-from-direction-if-applicable false true true true]
+    [send-from-direction-if-applicable true false true true]
+    [send-from-direction-if-applicable true true false true]
+    [send-from-direction-if-applicable true true true false]
+  }]]]]
+[program]]]]]]]]]]

@@ -1,8 +1,8 @@
 [stdlib [mu [] [ctrl [mu []
 [[file {hello} {
 hello:
-    li t1 42
     li t0 0xbaaabaaa
     csrw 0x51e t0
-    csrw 0x51e t1
+    csrw 0x51e a0
+    jalr zero ra 0
 }]]]]]]
