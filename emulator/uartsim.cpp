@@ -77,6 +77,7 @@ void uartsim_print_rx(int* port, int pin) {
             rx_state = UART_RX;
             rx_bit_count = 0;
             rx_tick_count = ticks_per_bit + ticks_per_bit/2;
+            rx=0;
         }
     } else if (rx_state == UART_RX) {
         if (--rx_tick_count == 0) {
@@ -94,7 +95,8 @@ void uartsim_print_rx(int* port, int pin) {
         }
     } else if(rx_state == UART_RX_DONE) {
         if (--rx_tick_count == 0) {
-            printf("Verilator received: %u\n", (unsigned int) rx);
+            printf("%c", (char) rx);
+            fflush(stdout);
             rx_state = UART_RX_IDLE;
         }
     }

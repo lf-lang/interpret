@@ -8,7 +8,9 @@ int main3();
 int main() {
     _fp_print(13);
     int core_id = read_csr(CSR_COREID);
+    int hart_id = read_hartid();
     _fp_print(core_id);
+    _fp_print(hart_id);
 
     switch(core_id) {
         case 0: main0(); break;

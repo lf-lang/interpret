@@ -20,8 +20,8 @@ TEST_DIR = programs/tests
 # -----------------------------------------------------------------------------
 THREADS ?= 4
 FLEXPRET ?= false
-ISPM_KBYTES ?= 16
-DSPM_KBYTES ?= 16
+ISPM_KBYTES ?= 24
+DSPM_KBYTES ?= 24
 MUL ?= false
 SUFFIX ?= all
 N_CORES ?= 4
@@ -71,7 +71,7 @@ include programs/integration-tests.mk
 unit-tests:
 	sbt 'test'
 
-test: unit-tests integration-tests
+test: emulator unit-tests integration-tests
 # -----------------------------------------------------------------------------
 #  Cleanup
 # -----------------------------------------------------------------------------
