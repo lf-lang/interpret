@@ -4,6 +4,8 @@ FPGA_DIR = fpga
 EMULATOR_DIR = emulator
 SCRIPTS_DIR = flexpret/scripts
 BUILD_DIR = build
+RESOURCE_DIR = flexpret/src/main/resources
+
 
 
 # Compiler options.
@@ -16,10 +18,10 @@ TEST_DIR = programs/tests
 # -----------------------------------------------------------------------------
 # Core and target configuration
 # -----------------------------------------------------------------------------
-THREADS ?= 1
+THREADS ?= 4
 FLEXPRET ?= false
-ISPM_KBYTES ?= 256
-DSPM_KBYTES ?= 256
+ISPM_KBYTES ?= 24
+DSPM_KBYTES ?= 24
 MUL ?= false
 SUFFIX ?= all
 N_CORES ?= 4
@@ -28,7 +30,6 @@ N_CORES ?= 4
 # Note: '?=' not used so string is only constructed once.
 CORE_CONFIG := $(THREADS)t$(if $(findstring true, $(FLEXPRET)),f)-$(ISPM_KBYTES)i-$(DSPM_KBYTES)d$(if $(findstring true, $(MUL)),-mul)-$(SUFFIX)
 SOC_CONFIG := $(N_CORES)
-
 
 # Default will build target and selected programs.
 all: $(TARGET)
@@ -61,13 +62,16 @@ include $(EMULATOR_DIR)/emulator.mk
 # Alias
 emulator: $(EMULATOR_BIN)
 
+# Integration tests
+include programs/integration-tests.mk
 
 # -----------------------------------------------------------------------------
 #  Tests
 # -----------------------------------------------------------------------------
-test:
+unit-tests:
 	sbt 'test'
 
+test: emulator unit-tests integration-tests
 # -----------------------------------------------------------------------------
 #  Cleanup
 # -----------------------------------------------------------------------------
@@ -76,20 +80,23 @@ test:
 remulator: clean emulator
 
 # Clean the emulator and the generated source.
-clean:
+clean: integration-clean
 	rm -rf $(FPGA_DIR)/generated-src
 	rm -rf $(FPGA_DIR)/build
+	rm -rf $(FPGA_DIR)/interpret.v
+	rm -rf $(FPGA_DIR)/DualPortBram.v
 	rm -f $(EMULATOR_BIN)
 	rm -rf ./build
 	rm -rf emulator/obj_dir
-	rm -f emulator/$(MODULE).sim.v
+	rm -f emulator/*.v
 	rm -rf out
-	
 
 # Clean for all configurations, targets, and test outputs.
-cleanall:
+cleanall: integration-clean
 	rm -rf $(FPGA_DIR)/generated-src
 	rm -rf $(FPGA_DIR)/build
+	rm -rf $(FPGA_DIR)/interpret.v
+	rm -rf $(FPGA_DIR)/DualPortBram.v
 	rm -f $(EMULATOR_BIN)
 	rm -rf ./build
 	rm -rf emulator/obj_dir
@@ -101,4 +108,4 @@ cleanall:
 	rm -rf test_run_dir
 	cd $(TEST_DIR) && $(MAKE) clean
 
-.PHONY: run fpga emulator remulator firrtl_raw verilog_raw clean cleanall test
+.PHONY: run fpga emulator remulator firrtl_raw verilog_raw clean cleanall test unit-tests

@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("input", help="Input memory file")
@@ -5,7 +7,7 @@ parser.add_argument("output", help="Output serialized app")
 
 args = parser.parse_args()
 
-DBG=True
+DBG=False
 
 
 def DBG_PRINT(str):
@@ -13,6 +15,8 @@ def DBG_PRINT(str):
         print(str)
 
 SYNC_ID = 0xC0DE
+
+print("Running serialize_app.py")
 
 with open(args.input, "r") as fr:
     lines = fr.readlines()
@@ -30,7 +34,13 @@ with open(args.input, "r") as fr:
         for l in lines:
             DBG_PRINT(f"Line={l} hex_string={bytearray.fromhex(l)}")
             bs = bytes.fromhex(l)
+            if len(bs) < 4:
+                while len(bs) < 4:
+                    bs = bytes.fromhex("00") + bs
+            
             assert(len(bs) == 4)
             fw.write(bs)
         fw.write(syncField)
         
+
+print("serialize_app.py Done")

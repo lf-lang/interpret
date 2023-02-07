@@ -15,17 +15,21 @@ OBJDUMP=riscv32-unknown-elf-objdump
 OBJCOPY=riscv32-unknown-elf-objcopy
 EMU=fp-emu
 
-# Compile a C program into a riscv ELF file.
-$CC -I$LIB_DIR/include -T $LINKER_SCRIPT -Xlinker -Map=output.map -g -static -O0 -march=rv32i -mabi=ilp32 -nostartfiles --specs=nosys.specs -o $1.riscv $LIB_DIR/start.S $LIB_DIR/syscalls.c $LIB_DIR/startup.c $LIB_DIR/tinyalloc/tinyalloc.c $LIB_DIR/flexpret_exceptions.c $LIB_DIR/flexpret_thread.c $LIB_DIR/flexpret_lock.c "${@:2}"
+# Compile
+$CC -I$LIB_DIR/include -T $LINKER_SCRIPT -Xlinker -Map=output.map -DNUM_THREADS=$1 -DCPU_FREQ=50000000 -g -static -O0 -march=rv32i -mabi=ilp32 -nostartfiles --specs=nosys.specs -o $2.riscv $LIB_DIR/start.S $LIB_DIR/syscalls.c $LIB_DIR/tinyalloc/tinyalloc.c $LIB_DIR/startup.c $LIB_DIR/flexpret_thread.c $LIB_DIR/flexpret_lock.c $LIB_DIR/flexpret_exceptions.c $LIB_DIR/sdd_uart.c $LIB_DIR/flexpret_stdio.c $LIB_DIR/flexpret_printer.c $LIB_DIR/cbuf.c  "${@:3}"
+
 # Generate dump file.
-$OBJDUMP -S -d $1.riscv > $1.dump
+$OBJDUMP -S -d $2.riscv > $2.dump
 
-# Extract a binary file from the ELF file.
-$OBJCOPY -O binary $1.riscv $1.binary.txt
+# Extract a temporary binary file from the ELF file.
+$OBJCOPY -O binary $2.riscv $2.binary.txt
 
-# Generate a hex file (with a .mem extension) from the binary file.
-xxd -c 4 -e $1.binary.txt | cut -c11-18 > $1.mem
-xxd -c 4 -e $1.binary.txt > $1.mem.orig
+# Generate a hex file (with a .mem extension) from the temporary binary file.
+xxd -c 4 -e $2.binary.txt | cut -c11-18 > $2.mem
+xxd -c 4 -e $2.binary.txt > $2.mem.orig
 
-# Delete the binary file.
-rm $1.binary.txt
+# Delete the temporary binary file.
+rm $2.binary.txt
+
+# Serialize
+serialize_app.py $2.mem $2.app

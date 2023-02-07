@@ -1,0 +1,38 @@
+name: Continuous Integration
+
+on: [push, pull_request]
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: adopt@1.8
+      - name: Cache Scala
+        uses: coursier/cache-action@v5
+      - name: Install verilator
+        run: sudo apt install verilator -y
+      - name: Install RISC-V toolchain
+        run: |
+          wget https://github.com/stnolting/riscv-gcc-prebuilt/releases/download/rv32i-4.0.0/riscv32-unknown-elf.gcc-12.1.0.tar.gz
+          sudo mkdir /opt/riscv
+          sudo tar -xzf riscv32-unknown-elf.gcc-12.1.0.tar.gz -C /opt/riscv/
+          rm  riscv32-unknown-elf.gcc-12.1.0.tar.gz
+          echo "PATH=$PATH:/opt/riscv/bin" >> $GITHUB_ENV
+      - name: Build InterPRET
+        run: |
+          make emulator N_CORES=4 THREADS=4 FLEX=false TRACE=0
+          root=$(pwd)
+          echo "PATH=$PATH:$root/flexpret/scripts/c:$root/emulator:$root/programs/scripts" >> $GITHUB_ENV
+          echo "FP_ROOT=$root" >> $GITHUB_ENV
+      - name: Run unit-tests
+        run: make unit-tests
+      - name: Run integration tests
+        run: make integration-tests

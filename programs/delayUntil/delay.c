@@ -1,6 +1,7 @@
 #include <flexpret_io.h>
 #include <flexpret_csrs.h>
 #include <flexpret_time.h>
+#include <flexpret_assert.h>
 
 int main() {
     _fp_print(1);
@@ -14,5 +15,8 @@ int main() {
     unsigned int pre = rdtime();
     delay_for(10000);
     unsigned int post = rdtime();
-    _fp_print(post-pre);
+    unsigned int diff = post-pre;
+    _fp_print(diff);
+    assert(diff < 20000);
+    _fp_print(14);
 }

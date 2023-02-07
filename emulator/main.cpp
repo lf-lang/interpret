@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
     top->eval();
     timestamp+=1;
     if (timestamp > 10) {
-      uartsim_print_rx(&top->io_uart_tx);
+      uartsim_print_rx( (int *) &top->io_gpio_out_1, 0);
       uartsim_write(&top->io_uart_rx);
     }
     top->clock = 0;

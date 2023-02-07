@@ -1,5 +1,6 @@
+
 build:
-	riscv-compile.sh 4 ispm ping_pong_noc.c
+	riscv-compile.sh 4 ispm mt.c
 
 clean:
 	riscv-clean.sh

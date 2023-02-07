@@ -8,6 +8,6 @@ int main() {
     uint8_t recv;
     while (1) {
         recv=uart_receive();
-        gpo_write_0(recv);
+        gpo_write(0, recv);
     }
 }
