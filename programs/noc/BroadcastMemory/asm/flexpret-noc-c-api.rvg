@@ -38,9 +38,11 @@ The remaining registers are all clobbers.
   [read-n-words sender-quintet mul4-2cycles {48} {438} sender-reg body c0 c1 c2 c3 c4]]]
 
 [def (print-flexpret-noc-c-api-h) [print {
-  #define NORTHEAST [id northeast-int]
-  #define NORTH [id north-int]
-  #define EAST [id east-int]
+  #define NORTHEAST_INT [id northeast-int]
+  #define NORTH_INT [id north-int]
+  #define EAST_INT [id east-int]
+  void read_n_words_and_print(int sender, int sender_direction);
+  void broadcast_count(int current_core, int start_count_at);
   }]]
 
 [def (print-read-n-words-and-print) [lam []
@@ -52,14 +54,12 @@ The remaining registers are all clobbers.
       [read-n-words-and-print direction sender-reg {t0} {t1} {t2} {t3} {t4} {t5}]]]]
   [[file {read_n_words_and_print} {
   read_n_words_and_print:
+    [fp-print sender-quintet {t0}]
     [receive-from-direction-if-applicable northeast-quintet]
     addi sender-quintet sender-quintet [- north-int northeast-int]
     [receive-from-direction-if-applicable north-quintet]
     addi sender-quintet sender-quintet [- east-int north-int]
     [receive-from-direction-if-applicable east-quintet]
-    [branch~
-      [!= {zero} sender-quintet]
-      [fp-print-int {666} {t0} {t1}]]
     jalr zero ra 0
   }]]]]
 

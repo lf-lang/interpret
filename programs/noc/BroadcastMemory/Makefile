@@ -13,7 +13,7 @@ gen:
 	rvg asm/stdlib.rvg asm/ctrl.rvg asm/hello_h.rvg > asm-gen/hello.h
 
 compile:
-	riscv_compile.sh ispm asm-gen/hello.s broadcast_memory_noc.c
+	riscv_compile.sh ispm asm-gen/hello.s asm-gen/read-n-words-and-print.s asm-gen/broadcast-count.s broadcast_memory_noc.c
 
 clean:
 	rm -r asm-gen
