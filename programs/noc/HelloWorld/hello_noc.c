@@ -28,7 +28,7 @@ uint32_t send_values0[] = {1,2,3,4,5,6,7,8,9,10};
 int main0() {
     // Send values to listener
     for (int i = 0; i<10; i++) {
-        noc_send(2, send_values0[i]);
+        noc_send(2, send_values0[i], TIMEOUT_FOREVER);
     }
 }
 
@@ -36,14 +36,14 @@ uint32_t send_values1[] = {10,20,30,40,50,60,70,80,90,100};
 int main1() {
     // Send values to listener
     for (int i = 0; i<10; i++) {
-        noc_send(3, send_values1[i]);
+        noc_send(3, send_values1[i], TIMEOUT_FOREVER);
     }
 }
 
 int main2() {
     uint32_t read;
     for (int i=0; i<10; i++) {
-        read = noc_receive();
+        noc_receive(&read, TIMEOUT_FOREVER);
         assert(read == send_values0[i]);
     }
 }
@@ -51,7 +51,7 @@ int main2() {
 int main3() {
     uint32_t read;
     for (int i=0; i<10; i++) {
-        read = noc_receive();
+        noc_receive(&read, TIMEOUT_FOREVER);
         assert(read == send_values1[i]);
     }
 }

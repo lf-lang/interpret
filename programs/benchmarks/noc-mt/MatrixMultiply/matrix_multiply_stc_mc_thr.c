@@ -37,9 +37,9 @@
 #define nb_threads (NUM_THREADS - 1)
 
 // Matrixes dimensions
-#define NRA 14 // number of rows in matrix a
-#define NCA 10 // number of columns in matrix a
-#define NCB 15 // number of columns in matrix b
+#define NRA 24 // number of rows in matrix a
+#define NCA 5 // number of columns in matrix a
+#define NCB 5 // number of columns in matrix b
 
 // Struct to save the start and end indexes among NRA per core
 typedef struct  {
@@ -48,7 +48,7 @@ typedef struct  {
 } local_NRA;
 
 // Matrixes a, b, and c, to be statically allocated.
-int32_t a[NRA][NCA], b[NCA][NCB], c[NRA][NCB];
+uint32_t a[NRA][NCA], b[NCA][NCB], c[NRA][NCB];
 
 // Utility function
 local_NRA get_NRA_range_per_core(int);
@@ -103,12 +103,12 @@ int main0() {
         // Send a elements
         for (i = l_nra.i_start; i < l_nra.i_end; i++)
             for (j = 0; j < NCA; j++)
-                noc_send(core, a[i][j]);
+                noc_send(core, a[i][j], TIMEOUT_FOREVER);
         
         // Then send b elements
         for (i = 0; i < NCA; i++)
             for (j = 0; j < NCB; j++)
-                noc_send(core, b[i][j]);
+                noc_send(core, b[i][j], TIMEOUT_FOREVER);
     }
 
     // Thread creation to perform the matrix multiply
@@ -121,7 +121,7 @@ int main0() {
     // Create the threads
     l_nra = get_NRA_range_per_core(0);
     for (i = 0; i < nb_threads; i++) {
-        errno[i] = thread_create(&tid[i], matrix_multiply_thread, &l_nra);
+        errno[i] = thread_create(HRTT, &tid[i], matrix_multiply_thread, &l_nra);
         if (errno[i] != 0)
             _fp_print(666);
     }
@@ -131,12 +131,12 @@ int main0() {
         l_nra = get_NRA_range_per_core(core);
 
         // Tell core that core0 is ready to recieve
-        noc_send(core, 99999);
+        noc_send(core, 99999, TIMEOUT_FOREVER);
 
         // Receive elements
         for (i = l_nra.i_start; i < l_nra.i_end; i++)
             for (j = 0; j < NCB; j++)
-                c[i][j] = noc_receive();
+                noc_receive(&c[i][j], TIMEOUT_FOREVER);
     }
 
     // Join once the local job is done
@@ -177,12 +177,12 @@ int mainX() {
     // Receive a elements
     for (i = l_nra.i_start; i < l_nra.i_end; i++)
         for (j = 0; j < NCA; j++)
-            a[i][j] = noc_receive();
+            noc_receive(&a[i][j], TIMEOUT_FOREVER);
 
     // Receive b elements
     for (i = 0; i < NCA; i++)
         for (j = 0; j < NCB; j++)
-            b[i][j] = noc_receive();
+            noc_receive(&b[i][j], TIMEOUT_FOREVER);
 
     // Set the parameters to pass to the thread
     start_time = rdtime();
@@ -191,7 +191,7 @@ int mainX() {
     thread_t tid[nb_threads];
     int errno[nb_threads];
     for (i = 0; i < nb_threads; i++) {
-        errno[i] = thread_create(&tid[i], matrix_multiply_thread, &l_nra);
+        errno[i] = thread_create(HRTT, &tid[i], matrix_multiply_thread, &l_nra);
         if (errno[i] != 0)
             _fp_print(666);
     }
@@ -206,11 +206,12 @@ int mainX() {
     _fp_print(stop_time - start_time);
 
     // Wait for the clear to send signal, which is equal to 99999
-    int clear = noc_receive();
+    uint32_t clear;
+    noc_receive(&clear, TIMEOUT_FOREVER);
     // Send computed c elements
     for (i = l_nra.i_start; i < l_nra.i_end; i++)
         for (j = 0 ; j<NCB ; j++)
-            noc_send(0, c[i][j]);
+            noc_send(0, c[i][j], TIMEOUT_FOREVER);
 
     return (0);
 }

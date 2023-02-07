@@ -35,7 +35,7 @@
 #define SIZE 60
 
 // Array of size SIZE
-int32_t array[SIZE];
+uint32_t array[SIZE];
 
 // Struct to save the index range per core
 typedef struct {
@@ -93,7 +93,7 @@ int main0() {
 
         // Send a elements
         for (i = rpc.i_start; i < rpc.i_end; i++)
-            noc_send(core, array[i]);
+            noc_send(core, array[i], TIMEOUT_FOREVER);
     }
 
     // Thread ids
@@ -105,7 +105,7 @@ int main0() {
     // Create the threads and scatter the work based on the indexes
     range_per_core range_core0 = get_range_per_core(0);
     for (i = 0; i < nb_threads; i++) {
-        errno[i] = thread_create(&tid[i], merge_sort_thread, &range_core0);
+        errno[i] = thread_create(HRTT, &tid[i], merge_sort_thread, &range_core0);
         if (errno[i] != 0)
             _fp_print(666);
     }
@@ -124,11 +124,11 @@ int main0() {
         rpc = get_range_per_core(core);
 
         // Tell core that core0 is ready to recieve
-        noc_send(core, 99999);
+        noc_send(core, 999, TIMEOUT_FOREVER);
 
         // Receive elements
         for (i = rpc.i_start; i < rpc.i_end; i++)
-            array[i] = noc_receive();
+            noc_receive(&array[i], TIMEOUT_FOREVER);
     }
 
     // Finally, merge (gather) the results from all cores
@@ -162,7 +162,7 @@ int mainX() {
 
     // Receive `array` elements
     for (i = rpc.i_start; i < rpc.i_end; i++) {
-        array[i] = noc_receive();
+        noc_receive(&array[i], TIMEOUT_FOREVER);
     }
 
     // Set the parameters to pass to the thread
@@ -172,7 +172,7 @@ int mainX() {
     thread_t tid[nb_threads];
     int errno[nb_threads];
     for (i = 0; i < nb_threads; i++) {
-        errno[i] = thread_create(&tid[i], merge_sort_thread, &rpc);
+        errno[i] = thread_create(HRTT, &tid[i], merge_sort_thread, &rpc);
         if (errno[i] != 0)
             _fp_print(666);
     }
@@ -190,10 +190,11 @@ int mainX() {
     _fp_print(stop_time - start_time);
 
     // Wait for the clear to send signal, which is equal to 99999
-    int clear = noc_receive();
+    uint32_t clear;
+    noc_receive(&clear, TIMEOUT_FOREVER);
     // Send sorted elements
     for (i = rpc.i_start; i < rpc.i_end; i++) {
-        noc_send(0, array[i]);
+        noc_send(0, array[i], TIMEOUT_FOREVER);
     }
 
     // Terminate by having thread 0 send
