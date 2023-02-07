@@ -37,7 +37,7 @@ val outputLinePattern = Pattern.compile("Core\\-(?<myId>\\d):\\s+(?<theirIdPlusO
 val analyzeOutputLine: String => Option[(Int, Int, Int)] = (outputLine: String) => {
     val matcher = outputLinePattern.matcher(outputLine)
     if (!matcher.matches()) {
-        println(s"Output line $outputLine does not match")
+        println(s"Output line '$outputLine' does not match")
         None
     }
     Some((
@@ -51,7 +51,7 @@ val writeBytesToFile = (data: Array[Byte], file: File) => {
     try data.foreach( target.write(_) ) finally target.close
 }
 val nocBenchmarksPath = Path.of(sys.env("FP_ROOT"), "programs", "benchmarks", "noc")
-val lrssPath = nocBenchmarksPath.resolve("latency_random_sparse_send")
+val lrssPath = nocBenchmarksPath.resolve("latency")
 
 val doMake = (p: Path) => {
     val builder = new ProcessBuilder("make").directory(lrssPath.toFile())
@@ -78,6 +78,7 @@ val doSimulate: Path => Results = (p: Path) => {
     Using(process.getErrorStream()) { stream =>
         while (readLine(stream) match {
             case Some(s) => {
+                println(s)
                 analyzeOutputLine(s) match {
                     case Some((myId, theirId, cycleCount)) => {
                         // Assume reporter is receiver

@@ -1,8 +1,8 @@
 build:
-	riscv_compile.sh ispm noc_latency.c
+	riscv-compile.sh 1 ispm noc_latency.c
 
 clean:
-	riscv_clean.sh
+	riscv-clean.sh
 
 
 rebuild: clean build
