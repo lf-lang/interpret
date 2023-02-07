@@ -1,5 +1,8 @@
+.bloop/
 .bsp/
+.idea/
 .metals/
+.scala-build/
 .vscode/
 project/
 target/
@@ -22,3 +25,4 @@ emulator/obj_dir
 **/*.app
 **/*.binary.txt
 **/test_res.txt
+**/asm-gen/
