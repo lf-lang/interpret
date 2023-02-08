@@ -42,16 +42,18 @@ int main1() {
 
 int main2() {
     uint32_t read;
+    fp_ret_t ret;
     for (int i=0; i<10; i++) {
-        noc_receive(&read, TIMEOUT_FOREVER);
+        ret = noc_receive(&read, TIMEOUT_FOREVER);
         assert(read == send_values0[i]);
     }
 }
 
 int main3() {
     uint32_t read;
+    fp_ret_t ret;
     for (int i=0; i<10; i++) {
-        noc_receive(&read, TIMEOUT_FOREVER);
+        ret = noc_receive(&read, TIMEOUT_FOREVER);
         assert(read == send_values1[i]);
     }
 }

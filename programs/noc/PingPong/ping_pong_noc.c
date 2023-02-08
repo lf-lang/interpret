@@ -27,7 +27,7 @@ int main() {
             noc_send(partner_core_id, ping_pong_count, TIMEOUT_FOREVER);
         } else {            
             // core_id received ping_pong_count from partner_core_id
-            noc_receive(&ping_pong_count, TIMEOUT_FOREVER);
+            fp_ret_t ret = noc_receive(&ping_pong_count, TIMEOUT_FOREVER);
             _fp_print(ping_pong_count);
         }
     }
