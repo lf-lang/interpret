@@ -7,16 +7,11 @@
 
 
 void *t1(void *arg) {
-
     print_str("Hello from t1\n");
-    print_int(read_hartid());
-    print_str("\n");
 }
 
 void *t2(void *arg) {
     print_str("Hello from t2\n");
-    print_int(read_hartid());
-    print_str("\n");
 }
 
 void main() {
@@ -31,7 +26,7 @@ void main() {
         assert(errno == 0);
 
         void * exit_code;
-        print_str("Hello Cruel World!\n");
+        print_int(42);
         thread_join(tid[0], &exit_code);
         thread_join(tid[1], &exit_code);
     }
