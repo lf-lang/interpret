@@ -307,6 +307,11 @@ LOOP_oSVW8oFZ1y:
     lw t3, 0(t0)
     andi t3, t3, 2
     beq t3, zero, LOOP_oSVW8oFZ1y
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi t3, t1, -256
     addi t3, t3, 1
     blt t3, zero, REMAINDER_dyQgJOEnQ0
