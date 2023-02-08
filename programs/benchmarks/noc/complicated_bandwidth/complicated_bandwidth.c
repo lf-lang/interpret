@@ -5,7 +5,7 @@
 
 #include "asm-gen/transmit_receive.h"
 
-#define N 200
+#define N 128
 
 #define SENDER_CORE_ID 0
 #define RECEIVER_CORE_ID 1
@@ -32,6 +32,7 @@ static void do_send() {
     int t0 = rdcycle();
     transmit_arr(RECEIVER_CORE_ID, &to_transmit[0], N);
     int t1 = rdcycle();
+    _fp_print(1111111);
     _fp_print(t1 - t0);
 }
 

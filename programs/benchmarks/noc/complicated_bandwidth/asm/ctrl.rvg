@@ -26,9 +26,9 @@
   }]]
 [def (unroll) [lam [(n num!) (body [-> [lamof num!] block!])]
     [[[fold-range {1} {0} n] {}]
-    [lam [(acc) (_)] {
+    [lam [(acc) (i)] {
       [id acc]
-      [body n]
+      [body i]
     }]]]]
 [def (repeat~) [lam [(n num!) (body block!)]
   [unroll n [lam [(_)] body]]]]

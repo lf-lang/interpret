@@ -36,27 +36,50 @@
   [using-noc {t0} [mu [] {
     [busywait read-noc-data-available c0]
     [read-noc-data result]}]]]]
+
+[def (transmit-receive-n-unroll num!) {64}]
+[def (tdm-n-cycles) {5}]
 [def (transmit_arr) [lam [(receiver input!) (arr input!) (length input!)]
-  [def (c0 clobber!) {t1}]
-  [def (c1 clobber!) {t2}]
+  [def (arr-end clobber!) {t1}]
+  [def (read-reg clobber!) {t2}]
   [def (c2 clobber!) {t3}]
   [using-noc {t0} [mu [] {
-    [busywait read-noc-tx-ready c0]
-    slli c0 length 2
-    add c0 c0 arr
+    slli arr-end length 2
+    add arr-end arr-end arr
+    [busywait read-noc-tx-ready read-reg]
     [write-noc-addr receiver]
-    [[for arr c0 {4} {
-      lw c1 0(arr)
-      [write-noc-data c1]}] true]}]]]]
+    addi c2 arr-end [* {-4} transmit-receive-n-unroll]
+    addi c2 c2 1
+    blt c2 zero REMAINDER
+    [[for arr c2 [* {4} transmit-receive-n-unroll] [unroll
+      transmit-receive-n-unroll
+      [lam [(i num!)] [[cycles! tdm-n-cycles] {
+        lw read-reg [* i {4}](arr)
+        [write-noc-data read-reg]
+        [repeat [- tdm-n-cycles {3}] {nop}]}]]]] true]
+    REMAINDER:
+    [[for arr arr-end {4} {
+      lw read-reg 0(arr)
+      [write-noc-data read-reg]}] true]}]]]]
 [def (receive_arr) [lam [(arr input!) (length input!)]
-  [def (end-reg) {t1}]
+  [def (arr-end) {t1}]
   [def (read-reg) {t2}]
   [def (c2 clobber!) {t3}]
   [using-noc {t0} [mu [] {
+    slli arr-end length 2
+    add arr-end arr-end arr
     [busywait read-noc-data-available c2]
-    slli end-reg length 2
-    add end-reg end-reg arr
-    [[for arr end-reg {4} {
+    addi c2 arr-end [* {-4} transmit-receive-n-unroll]
+    addi c2 c2 1
+    blt c2 zero REMAINDER
+    [[for arr c2 [* {4} transmit-receive-n-unroll] [unroll
+      transmit-receive-n-unroll
+      [lam [(i num!)] [[cycles! tdm-n-cycles] {
+        [read-noc-data read-reg]
+        sw read-reg [* {4} i](arr)
+        [repeat [- tdm-n-cycles {3}] {nop}]}]]]] true]
+    REMAINDER:
+    [[for arr arr-end {4} {
       [read-noc-data read-reg]
       sw read-reg 0(arr)}] true]}]]]]
 
