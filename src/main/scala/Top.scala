@@ -111,7 +111,7 @@ class Top(topCfg: TopConfig) extends Module {
 
 
   // Drive gpio input of each core to 0 by default
-  cores.map(_.io.gpio.in.map(_ := 0.U))
+  cores.drop(1).map(_.io.gpio.in.map(_ := 0.U))
   // Only core0 can read/write to top-level GPIOs
   // FIXME: We should have dedicated IO banks to each core
   io.gpio.in <> cores(0).io.gpio.in
