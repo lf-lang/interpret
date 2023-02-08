@@ -51,7 +51,7 @@ val writeBytesToFile = (data: Array[Byte], file: File) => {
     try data.foreach( target.write(_) ) finally target.close
 }
 val nocBenchmarksPath = Path.of(sys.env("FP_ROOT"), "programs", "benchmarks", "noc")
-val lrssPath = nocBenchmarksPath.resolve("latency")
+val lrssPath = nocBenchmarksPath.resolve("latency_random_sparse_send")
 
 val doMake = (p: Path) => {
     val builder = new ProcessBuilder("make").directory(lrssPath.toFile())

@@ -1,8 +1,8 @@
 build:
-	riscv_compile.sh ispm noc_latency_random_sparse_send.c
+	riscv-compile.sh 1 ispm noc_latency_random_sparse_send.c
 
 clean:
-	riscv_clean.sh
+	riscv-clean.sh
 
 
 rebuild: clean build
