@@ -21,14 +21,14 @@ int main()
             // Increment the ping pong count before you send it
             ping_pong_count++;
             partner_core_id = core_id + 1;
-            noc_send(partner_core_id, ping_pong_count);
+            noc_send(partner_core_id, ping_pong_count, TIMEOUT_FOREVER);
             // core_id sent and incremented ping_pong_count to partner_core_id
             _fp_print(ping_pong_count);
         }
         else
         {
             partner_core_id = core_id - 1;
-            ping_pong_count = noc_receive();
+            fp_ret_t ret = noc_receive(&ping_pong_count, TIMEOUT_FOREVER);
             // core_id received ping_pong_count from partner_core_id
             _fp_print(ping_pong_count);
         }

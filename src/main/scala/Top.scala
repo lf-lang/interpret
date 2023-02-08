@@ -13,7 +13,6 @@ case class TopConfig(
   nCores : Int,
   freq : Int
 ){
-  require(nCores <= 4)
 }
 
 

@@ -180,9 +180,9 @@ The application most be linked with a special linker script which places the app
 
 To verify that the bootloader works we will try to load a simple HelloWorld onto a single core InterPRET through the serial bootloader
 
-1. Build a single-core InterPRET with tracing disabled
+1. Build a single-core InterPRET
 ```
-make clean && make emulator N_CORES=1 TRACE=0
+make clean && make emulator N_CORES=1
 ```
 
 2. Build a HelloWorld application linked to start at 0x1000 (4KB) 
@@ -222,3 +222,8 @@ Aborting...
 ```
 
 I.e. Core-0 receives the 222 and 192 (0xDE and 0xC0 the SYNC_ID) before printing 100. Then finally printing 42 which is done from the application. 
+
+
+## Debugging
+To get waveforms build the InterPRET with TRACE=1, e.g.
+`make emulator N_CORES=1 TRACE=1`
