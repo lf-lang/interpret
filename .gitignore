@@ -25,4 +25,3 @@ emulator/obj_dir
 **/*.app
 **/*.binary.txt
 **/test_res.txt
-**/asm-gen/

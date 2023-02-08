@@ -1,0 +1,13 @@
+[mu [(program)]
+[def (fp-print) [lam [(r input!) (c0 clobber!)] {
+    li c0 0xbaaabaaa
+    csrw 0x51e c0
+    csrw 0x51e r
+}]]
+[def (fp-print-int) [lam [(k num!) (c0 clobber!) (c1 clobber!)] {
+    li c0 0xbaaabaaa
+    li c1 [id k]
+    csrw 0x51e c0
+    csrw 0x51e c1
+}]]
+[program]]

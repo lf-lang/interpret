@@ -1,0 +1,105 @@
+[mu [(program)]
+[def (condition!) [assertify [lam [(x)] [[hasattr {condition}] x]] {a condition}]]
+[def (make-condition) [lam [(true-branch frag!) (false-branch frag!)] [lam [(rs1 reg!) (rs2 reg!)]
+  [[addattr {condition}]
+    [lam [(label frag!)]
+      [pair {
+        [id true-branch] rs1 rs2 label
+      } {
+        [id false-branch] rs1 rs2 label
+      }]]]]]]
+[def (<) [make-condition {blt} {bgeu}]]
+[def (>=) [make-condition {bgeu} {blt}]]
+[def (==) [make-condition {beq} {bne}]]
+[def (!=) [make-condition {bne} {beq}]]
+[def (branch3) [lam [(condition condition!) (instrs [cycles! {2}])]
+  [def (assembly) {
+    [id { [id [[condition {DONE}] false]] } ]
+    [id instrs]
+    DONE:
+  }]
+  [[unsafe-assert-exact-cycles {3}] assembly]]]
+[def (branch~) [lam [(condition condition!) (asm block!)] {
+  [[condition {DONE}] false]
+  [id asm]
+  DONE:
+  }]]
+[def (unroll) [lam [(n num!) (body [-> [lamof num!] block!])]
+    [[[fold-range {1} {0} n] {}]
+    [lam [(acc) (_)] {
+      [id acc]
+      [body n]
+    }]]]]
+[def (repeat~) [lam [(n num!) (body block!)]
+  [unroll n [lam [(_)] body]]]]
+[def (repeat) [lam [(n num!) (body block!)]
+  [[unsafe-assert-exact-cycles [* n [cycles? body]]]
+    [repeat~ n body]]]]
+[def (for) [lam [
+    (start reg!) (stop reg!)
+    (step num! [>! {0}])
+    (body block!)]
+  [def (addition-and-branching-cycles) {4}]
+  [def (total-cycles [lamof num!]) [lam [(num-iterations)] [-
+    [* num-iterations
+      [+ [cycles? body] addition-and-branching-cycles]]
+    {2}]]]
+  [def (assembly) {
+    LOOP:
+    [id body]
+    addi start start step
+    blt start stop LOOP
+  }]
+  [pair assembly total-cycles]]]
+[def (for_startup+iterations*<body+4>-2) [lam [
+    (counter reg!) (clobber reg!)
+    (start num!) (stop num! [>! start]) (step num! [>! {0}])
+    (body block!)]
+  [def (stopreg) clobber]
+  [def (startup) {
+    li counter start
+    li stopreg stop
+  }]
+  [def (num-iterations) [/ [- start stop] [- {0} step]]]
+  [def (assembly,cycles pair!) [for counter stopreg step body]]
+  {
+    [id startup]
+    [[unsafe-assert-exact-cycles
+        [[assembly,cycles false] num-iterations]]
+      [assembly,cycles true]]
+  }]]
+[def (prologue-epilogue!) [->
+  [lamof [∘ num! [∘ [>=! {0}] [<! {12}]]]]
+  block!]]
+[def (stackpush) [lam [(s|t|a frag!)] [lam [(n)]
+  [[[fold-range {1} {0} n] {addi sp sp [* {4} n]}]
+    [lam [(acc block!) (k num!)] {
+      sw [id s|t|a][id k] [* {4} k](sp)
+      [id acc]
+    }]]]]]
+[def (stackpop) [lam [(s|t|a frag!)] [lam [(n)]
+  [[[fold-range {1} {0} n] {addi sp sp [* {-4} n]}]
+    [lam [(acc block!) (k num!)] {
+      [id acc]
+      lw [id s|t|a][id k] [* {4} k](sp)
+    }]]]]]
+[def (file) [lam [(function-names frag!) (body block!)]
+  [mu []
+    [[println {.global [id function-names]}]]
+    [[println {.section .text}]]
+    [[println body]]
+    [[println {.end}]]]]]
+[def (prologue prologue-epilogue!) [stackpush {s}]]
+[def (epilogue prologue-epilogue!) [stackpop {s}]]
+[def (mul4) [lam [(rd output!) (rs1 input!)] {
+  slli rd rs1 2
+}]]
+[def (mul5) [lam [(rd output!) (rs1 input!)] {
+  [mul4 rd rs1]
+  add rd rd rs1
+}]]
+[def (busywait) [lam [(load [-> [lamof output!] block!]) (c0 clobber!)] {
+  LOOP:
+  [load c0]
+  beqz c0 LOOP}]]
+[program]]

@@ -1,0 +1,76 @@
+[stdlib [mu [] [ctrl [mu [] [flexpret [mu []
+[def (noc-base-address)
+  {0x40000020}]
+[def (load-noc-base-address) [lam [(r output!)]
+  {li r 0x40000020}]]
+[def (write-noc-data) [lam [(noc-base input!)] [lam [(data input!)] [[cycles! {1}] {
+  sw data 4(noc-base)}]]]]
+[def (read-noc-data) [lam [(noc-base input!)] [lam [(data output!)] [[cycles! {2}] {
+  lw data 4(noc-base)}]]]]
+[def (write-noc-addr) [lam [(noc-base input!)] [lam [(addr input!)] [[cycles! {1}] {
+  sw addr 8(noc-base)}]]]]
+[def (read-noc-data-available) [lam [(noc-base input!)] [lam [(result output!)] [[cycles! {3}] {
+  lw result 0(noc-base)
+  andi result result 2}]]]]
+[def (read-noc-tx-ready) [lam [(noc-base input!)] [lam [(result output!)] {
+  lw result 0(noc-base)
+  andi result result 1}]]]
+[def (using-noc) [lam [(noc-base input!) (moo [lam! {0}])]
+  [def (write-noc-data       ) [write-noc-data        noc-base]]
+  [def (read-noc-data        ) [read-noc-data         noc-base]]
+  [def (write-noc-addr       ) [write-noc-addr        noc-base]]
+  [def (read-noc-data-available) [read-noc-data-available noc-base]]
+  [def (read-noc-tx-ready    ) [read-noc-tx-ready     noc-base]]
+  {
+    [load-noc-base-address noc-base]
+    [moo]}]]
+[def (transmit) [lam [(receiver input!) (word input!)]
+  [def (c0 clobber!) {t1}]
+  [using-noc {t0} [mu [] {
+    [busywait read-noc-tx-ready c0]
+    [write-noc-addr receiver]
+    [write-noc-data word]
+    }]]]]
+[def (receive) [lam [(result output!)]
+  [def (c0 clobber!) {t1}]
+  [using-noc {t0} [mu [] {
+    [busywait read-noc-data-available c0]
+    [read-noc-data result]}]]]]
+[def (transmit_arr) [lam [(receiver input!) (arr input!) (length input!)]
+  [def (c0 clobber!) {t1}]
+  [def (c1 clobber!) {t2}]
+  [def (c2 clobber!) {t3}]
+  [using-noc {t0} [mu [] {
+    [busywait read-noc-tx-ready c0]
+    slli c0 length 2
+    add c0 c0 arr
+    [write-noc-addr receiver]
+    [[for arr c0 {4} {
+      lw c1 0(arr)
+      [write-noc-data c1]}] true]}]]]]
+[def (receive_arr) [lam [(arr input!) (length input!)]
+  [def (end-reg) {t1}]
+  [def (read-reg) {t2}]
+  [def (c2 clobber!) {t3}]
+  [using-noc {t0} [mu [] {
+    [busywait read-noc-data-available c2]
+    slli end-reg length 2
+    add end-reg end-reg arr
+    [[for arr end-reg {4} {
+      [read-noc-data read-reg]
+      sw read-reg 0(arr)}] true]}]]]]
+
+[[file {transmit, receive, transmit_arr, receive_arr} {
+transmit:  // receiver, word (-> void)
+  [transmit {a0} {a1}]
+  ret
+receive:   // -> uint32_t
+  [receive {a0}]
+  ret
+transmit_arr:  // uint32_t receiver, uint32_t* a, uint32_t nwords -> void
+  [transmit_arr {a0} {a1} {a2}]
+  ret
+receive_arr:   // uint32_t* a, uint32_t nwords -> void
+  [receive_arr {a0} {a1}]
+  ret
+}]]]]]]]]
