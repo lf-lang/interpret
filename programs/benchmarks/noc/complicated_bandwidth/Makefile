@@ -7,7 +7,7 @@ clean:
 	riscv-clean.sh
 
 TDM_N_CYCLES ?= 5
-TX_RX_N_UNROLL ?= 64
+TX_RX_N_UNROLL ?= 16
 
 gen:
 	mkdir -p asm-gen

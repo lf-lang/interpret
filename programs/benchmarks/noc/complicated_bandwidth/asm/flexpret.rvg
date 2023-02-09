@@ -10,4 +10,5 @@
     csrw 0x51e c0
     csrw 0x51e c1
 }]]
+[def (csr-coreid) {0x510}]
 [program]]

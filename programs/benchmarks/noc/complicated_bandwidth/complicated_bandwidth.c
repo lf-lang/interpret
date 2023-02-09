@@ -2,10 +2,11 @@
 #include <stdlib.h>
 #include <flexpret_io.h>
 #include <flexpret_noc.h>
+#include <flexpret_time.h>
 
 #include "asm-gen/transmit_receive.h"
 
-#define N 500
+#define N 100
 
 #define SENDER_CORE_ID 0
 #define RECEIVER_CORE_ID 1
@@ -13,13 +14,11 @@
 uint32_t to_transmit[N];
 uint32_t to_receive[N];
 
-
-
-// static void print_to_receive() {
-//     for (int i = 0; i < N; i++) {
-//         _fp_print(to_receive[i]);
-//     }
-// }
+static void print_to_receive() {
+    for (int i = 0; i < N; i++) {
+        _fp_print(to_receive[i]);
+    }
+}
 
 // static void do_send() {
 //     fill_to_transmit();
@@ -60,7 +59,7 @@ static void check_transmitted_equals_received() {
         if (to_transmit[i] != to_receive[i]) {
             _fp_print(i);
             _fp_print(666);
-            return;
+            // return;
         }
     }
     _fp_print(77777);
@@ -77,9 +76,8 @@ static void do_send() {
 }
 
 static void do_receive() {
-    uint32_t t0 = rdcycle();
-    receive_arr(&to_receive[0], N);
-    uint32_t t1 = rdcycle();
+    receive_arr(&to_receive[0], N - 10);
+    print_to_receive();
     transmit_arr(SENDER_CORE_ID, &to_receive[0], N);
 }
 

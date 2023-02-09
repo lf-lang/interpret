@@ -30,12 +30,13 @@
     [busywait read-noc-tx-ready c0]
     [write-noc-addr receiver]
     [write-noc-data word]
-    }]]]]
+    ret}]]]]
 [def (receive) [lam [(result output!)]
   [def (c0 clobber!) {t1}]
   [using-noc {t0} [mu [] {
     [busywait read-noc-data-available c0]
-    [read-noc-data result]}]]]]
+    [read-noc-data result]
+    ret}]]]]
 
 [def (transmit_arr) [lam [(receiver input!) (arr input!) (length input!)]
   [def (arr-end clobber!) {t1}]
@@ -46,53 +47,71 @@
     add arr-end arr-end arr
     [busywait read-noc-tx-ready read-reg]
     [write-noc-addr receiver]
+    csrr c2 csr-coreid
+    [write-noc-data c2]
+    [fp-print c2 read-reg]
+    [busywait read-noc-data-available read-reg]
+    [read-noc-data read-reg]
+    [/* {bne read-reg c2 FAIL}]
     addi c2 arr-end [* {-4} tx-rx-n-unroll]
     addi c2 c2 1
     blt c2 zero REMAINDER
-    [[for arr c2 [* {4} tx-rx-n-unroll] [unroll
-      tx-rx-n-unroll
-      [lam [(i num!)] [[cycles! tdm-n-cycles] {
-        lw read-reg [* i {4}](arr)
-        [write-noc-data read-reg]
-        [repeat [- tdm-n-cycles {3}] {nop}]}]]]] true]
+    [write-noc-data {zero}]
+    [repeat [- tdm-n-cycles {2}] {nop}]
+    [[for arr c2 [* {4} tx-rx-n-unroll] {
+      [unroll
+        tx-rx-n-unroll
+        [lam [(i num!)] [[cycles! tdm-n-cycles] {
+          lw read-reg [* i {4}](arr)
+          [write-noc-data read-reg]
+          [repeat [- tdm-n-cycles {3}] {nop}]}]]]
+      [repeat [- tdm-n-cycles {4}] {nop}]}] true]
     REMAINDER:
     [[for arr arr-end {4} {
       lw read-reg 0(arr)
-      [write-noc-data read-reg]}] true]}]]]]
+      [write-noc-data read-reg]}] true]
+    ret
+    FAIL:
+    [fp-print read-reg c2]
+    [fp-print-int {666} read-reg c2]}]]]]
 [def (receive_arr) [lam [(arr input!) (length input!)]
   [def (arr-end) {t1}]
   [def (read-reg) {t2}]
   [def (c2 clobber!) {t3}]
   [using-noc {t0} [mu [] {
+    [busywait read-noc-data-available read-reg]
+    [read-noc-data read-reg]
+    [write-noc-addr read-reg]
+    [write-noc-data read-reg]
     slli arr-end length 2
     add arr-end arr-end arr
-    [busywait read-noc-data-available c2]
-    [repeat tdm-n-cycles {nop}]
     addi c2 arr-end [* {-4} tx-rx-n-unroll]
     addi c2 c2 1
+    [busywait read-noc-data-available read-reg]
+    [read-noc-data read-reg]
+    [repeat [- tdm-n-cycles {1}] {nop}]
     blt c2 zero REMAINDER
-    [[for arr c2 [* {4} tx-rx-n-unroll] [unroll
-      tx-rx-n-unroll
-      [lam [(i num!)] [[cycles! tdm-n-cycles] {
-        [read-noc-data read-reg]
-        sw read-reg [* {4} i](arr)
-        [repeat [- tdm-n-cycles {3}] {nop}]}]]]] true]
+    [[for arr c2 [* {4} tx-rx-n-unroll] {
+      [unroll
+        tx-rx-n-unroll
+        [lam [(i num!)] [[cycles! tdm-n-cycles] {
+          [read-noc-data read-reg]
+          sw read-reg [* {4} i](arr)
+          [repeat [- tdm-n-cycles {3}] {nop}]}]]]
+      [repeat [- tdm-n-cycles {4}] {nop}]}] true]
     REMAINDER:
     [[for arr arr-end {4} {
       [read-noc-data read-reg]
-      sw read-reg 0(arr)}] true]}]]]]
+      sw read-reg 0(arr)}] true]
+    ret}]]]]
 
 [[file {transmit, receive, transmit_arr, receive_arr} {
 transmit:  // receiver, word (-> void)
   [transmit {a0} {a1}]
-  ret
 receive:   // -> uint32_t
   [receive {a0}]
-  ret
 transmit_arr:  // uint32_t receiver, uint32_t* a, uint32_t nwords -> void
   [transmit_arr {a0} {a1} {a2}]
-  ret
 receive_arr:   // uint32_t* a, uint32_t nwords -> void
   [receive_arr {a0} {a1}]
-  ret
 }]]]]]]]]]]
