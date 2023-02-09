@@ -38,6 +38,12 @@ int main1() {
     for (int i = 0; i<10; i++) {
         noc_send(3, send_values1[i], TIMEOUT_FOREVER);
     }
+    uint32_t read;
+    fp_ret_t ret;
+    for (int i=0; i<10; i++) {
+        ret = noc_receive(&read, TIMEOUT_FOREVER);
+        assert(read == send_values1[i]);
+    }
 }
 
 int main2() {
@@ -55,5 +61,8 @@ int main3() {
     for (int i=0; i<10; i++) {
         ret = noc_receive(&read, TIMEOUT_FOREVER);
         assert(read == send_values1[i]);
+    }
+    for (int i = 0; i<10; i++) {
+        noc_send(1, send_values1[i], TIMEOUT_FOREVER);
     }
 }
