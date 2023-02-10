@@ -6,7 +6,9 @@
 
 #include "asm-gen/transmit_receive.h"
 
-#define N 500
+#ifndef N
+#define N 50
+#endif
 
 #define SENDER_CORE_ID 0
 #define RECEIVER_CORE_ID 1
@@ -70,6 +72,7 @@ static void do_send() {
     // fill_to_transmit takes a long time, which ensures that the receiver is ready
     // when it comes time to take a measurement
     fill_to_transmit();
+    do_test_nops();
     uint32_t t0 = rdcycle();
     transmit_arr(RECEIVER_CORE_ID, &to_transmit[0], N);
     uint32_t t1 = rdcycle();

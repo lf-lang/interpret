@@ -1,4 +1,4 @@
-.global transmit, receive, transmit_arr, receive_arr
+.global transmit, receive, transmit_arr, receive_arr, do_test_nops
 .section .text
 transmit:
     lui t0, 262144
@@ -40,7 +40,7 @@ LOOP_tZvLUwyjwy:
     andi t2, t2, 2
     beq t2, zero, LOOP_tZvLUwyjwy
     lw t2, 4(t0)
-    addi t3, t1, -64
+    addi t3, t1, -128
     addi t3, t3, 1
     blt t3, zero, REMAINDER_dCcIYk9YE4
     sw zero, 4(t0)
@@ -112,8 +112,72 @@ LOOP_xx2KBeM1TM:
     sw t2, 4(t0)
     addi zero, zero, 0
     addi zero, zero, 0
+    lw t2, 64(a1)
+    sw t2, 4(t0)
     addi zero, zero, 0
-    addi a1, a1, 64
+    addi zero, zero, 0
+    lw t2, 68(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 72(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 76(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 80(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 84(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 88(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 92(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 96(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 100(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 104(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 108(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 112(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 116(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 120(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 124(a1)
+    sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi a1, a1, 128
     blt a1, t3, LOOP_xx2KBeM1TM
 REMAINDER_dCcIYk9YE4:
 LOOP_oSVW8oFZ1y:
@@ -147,7 +211,7 @@ LOOP_dyQgJOEnQ0:
     sw t2, 4(t0)
     slli t1, a1, 2
     add t1, t1, a0
-    addi t3, t1, -64
+    addi t3, t1, -128
     addi t3, t3, 1
 LOOP_syOGwjVTp7:
     lw t2, 0(t0)
@@ -224,8 +288,72 @@ LOOP_3gNwMs2sHd:
     sw t2, 60(a0)
     addi zero, zero, 0
     addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 64(a0)
     addi zero, zero, 0
-    addi a0, a0, 64
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 68(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 72(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 76(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 80(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 84(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 88(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 92(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 96(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 100(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 104(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 108(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 112(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 116(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 120(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    lw t2, 4(t0)
+    sw t2, 124(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi a0, a0, 128
     blt a0, t3, LOOP_3gNwMs2sHd
 REMAINDER_RI1ag3enLg:
     addi zero, zero, 0
@@ -238,6 +366,13 @@ LOOP_ABkSUJRNgK:
     addi zero, zero, 0
     addi a0, a0, 4
     blt a0, t1, LOOP_ABkSUJRNgK
+    jalr zero, ra, 0
+do_test_nops:
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     jalr zero, ra, 0
 
 .end

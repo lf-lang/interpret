@@ -70,7 +70,7 @@
     [[for arr arr-end {4} {
       lw read-reg 0(arr)
       [write-noc-data read-reg]
-      [repeat {3} {nop}]}] true]
+      [repeat [[mod- tdm-n-cycles] {0} {7}] {nop}]}] true]
     ret
     FAIL:
     [fp-print read-reg c2]
@@ -106,10 +106,10 @@
     [[for arr arr-end {4} {
       [read-noc-data read-reg]
       sw read-reg 0(arr)
-      [repeat {3} {nop}]}] true]
+      [repeat [[mod- tdm-n-cycles] {0} {7}] {nop}]}] true]
     ret}]]]]
 
-[[file {transmit, receive, transmit_arr, receive_arr} {
+[[file {transmit, receive, transmit_arr, receive_arr, do_test_nops} {
 transmit:  // receiver, word (-> void)
   [transmit {a0} {a1}]
 receive:   // -> uint32_t
@@ -118,4 +118,8 @@ transmit_arr:  // uint32_t receiver, uint32_t* a, uint32_t nwords -> void
   [transmit_arr {a0} {a1} {a2}]
 receive_arr:   // uint32_t* a, uint32_t nwords -> void
   [receive_arr {a0} {a1}]
+do_test_nops:
+  [repeat~ num-test-nops {nop
+  }]
+  ret
 }]]]]]]]]]]
