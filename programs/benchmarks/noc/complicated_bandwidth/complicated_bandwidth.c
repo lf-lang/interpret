@@ -6,7 +6,7 @@
 
 #include "asm-gen/transmit_receive.h"
 
-#define N 100
+#define N 500
 
 #define SENDER_CORE_ID 0
 #define RECEIVER_CORE_ID 1
@@ -54,18 +54,21 @@ static void fill_to_transmit() {
 // }
 
 static void check_transmitted_equals_received() {
+    int result = 77777;
     for (int i = 0; i < N; i++) {
         _fp_print(to_receive[i]);
         if (to_transmit[i] != to_receive[i]) {
             _fp_print(i);
             _fp_print(666);
-            // return;
+            result = 666;
         }
     }
-    _fp_print(77777);
+    _fp_print(result);
 }
 
 static void do_send() {
+    // fill_to_transmit takes a long time, which ensures that the receiver is ready
+    // when it comes time to take a measurement
     fill_to_transmit();
     uint32_t t0 = rdcycle();
     transmit_arr(RECEIVER_CORE_ID, &to_transmit[0], N);
@@ -76,7 +79,7 @@ static void do_send() {
 }
 
 static void do_receive() {
-    receive_arr(&to_receive[0], N - 10);
+    receive_arr(&to_receive[0], N);
     print_to_receive();
     transmit_arr(SENDER_CORE_ID, &to_receive[0], N);
 }

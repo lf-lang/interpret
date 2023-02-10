@@ -69,7 +69,8 @@
     REMAINDER:
     [[for arr arr-end {4} {
       lw read-reg 0(arr)
-      [write-noc-data read-reg]}] true]
+      [write-noc-data read-reg]
+      [repeat {3} {nop}]}] true]
     ret
     FAIL:
     [fp-print read-reg c2]
@@ -100,9 +101,12 @@
           [repeat [- tdm-n-cycles {3}] {nop}]}]]]
       [repeat [- tdm-n-cycles {4}] {nop}]}] true]
     REMAINDER:
+    nop
+    nop
     [[for arr arr-end {4} {
       [read-noc-data read-reg]
-      sw read-reg 0(arr)}] true]
+      sw read-reg 0(arr)
+      [repeat {3} {nop}]}] true]
     ret}]]]]
 
 [[file {transmit, receive, transmit_arr, receive_arr} {

@@ -119,6 +119,9 @@ REMAINDER_dCcIYk9YE4:
 LOOP_oSVW8oFZ1y:
     lw t2, 0(a1)
     sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi a1, a1, 4
     blt a1, t1, LOOP_oSVW8oFZ1y
     jalr zero, ra, 0
@@ -225,9 +228,14 @@ LOOP_3gNwMs2sHd:
     addi a0, a0, 64
     blt a0, t3, LOOP_3gNwMs2sHd
 REMAINDER_RI1ag3enLg:
+    addi zero, zero, 0
+    addi zero, zero, 0
 LOOP_ABkSUJRNgK:
     lw t2, 4(t0)
     sw t2, 0(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi a0, a0, 4
     blt a0, t1, LOOP_ABkSUJRNgK
     jalr zero, ra, 0
