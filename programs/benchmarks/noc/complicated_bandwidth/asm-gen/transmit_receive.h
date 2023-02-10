@@ -6,4 +6,4 @@ void transmit_arr(uint32_t receiver, uint32_t* a, uint32_t nwords);
 void receive_arr(uint32_t* a, uint32_t nwords);
 void do_test_nops();
 
-#define N 500
+#define N 100
