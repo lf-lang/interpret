@@ -57,7 +57,7 @@
     addi c2 c2 1
     [write-noc-data {zero}]
     blt c2 arr REMAINDER
-    [repeat [- tdm-n-cycles {4}] {nop}]
+    [repeat~ [- tdm-n-cycles {4}] {nop}]
     [[for arr c2 [* {4} tx-rx-n-unroll] {
       [join
         tx-rx-n-unroll
@@ -93,7 +93,7 @@
     [busywait read-noc-data-available read-reg]
     [read-noc-data read-reg]
     blt c2 arr REMAINDER
-    [repeat [- tdm-n-cycles {5}] {nop}]
+    [repeat~ [- tdm-n-cycles {5}] {nop}]
     [[for arr c2 [* {4} tx-rx-n-unroll] {
       [join
         tx-rx-n-unroll
