@@ -6,8 +6,18 @@
 #include <flexpret_assert.h>
 #include <flexpret_noc.h>
 
+#define STDIO_UART_PIN 0
+#define STDIO_UART_BAUD 115200
+#define STDIO_UART_PORT 1
+
 void* t1(void* arg) {
-    fp_printer_run();
+    fp_printer_config_t cfg = {
+        .baudrate = STDIO_UART_BAUD,
+        .pin = STDIO_UART_PIN,
+        .port = STDIO_UART_PORT
+    };
+
+    fp_printer_run(&cfg);
 }
 
 void *t2(void *arg) {
