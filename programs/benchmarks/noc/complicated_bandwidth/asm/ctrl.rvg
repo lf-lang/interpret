@@ -25,11 +25,19 @@
   DONE:
   }]]
 [def (unroll) [lam [(n num!) (body [-> [lamof num!] block!])]
-    [[[fold-range {1} {0} n] {}]
-    [lam [(acc) (i)] {
-      [id acc]
-      [body i]
-    }]]]]
+  [[[fold-range {1} {0} n] {}]
+  [lam [(acc) (i)] {
+    [id acc]
+    [body i]
+  }]]]]
+[def (join) [lam [(n num!) (glue block!) (body [-> [lamof num!] block!])] {
+  [[[fold-range {1} {0} [- n {1}]] {}]
+  [lam [(acc) (i)] {
+    [id acc]
+    [body i]
+    [id glue]
+  }]]
+  [body [- n {1}]]}]]
 [def (repeat~) [lam [(n num!) (body block!)]
   [unroll n [lam [(_)] body]]]]
 [def (repeat) [lam [(n num!) (body block!)]
