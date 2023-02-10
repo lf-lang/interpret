@@ -57,7 +57,7 @@
     addi c2 c2 1
     [write-noc-data {zero}]
     blt c2 arr REMAINDER
-    [repeat [- tdm-n-cycles {1}] {nop}]
+    [repeat [- tdm-n-cycles {4}] {nop}]
     [[for arr c2 [* {4} tx-rx-n-unroll] {
       [join
         tx-rx-n-unroll
@@ -67,9 +67,12 @@
           [write-noc-data read-reg]}]]]
       [repeat [[mod- tdm-n-cycles] {0} {7}] {nop}]}] true]
     REMAINDER:
+    nop
+    nop
     [[for arr arr-end {4} {
       lw read-reg 0(arr)
-      [write-noc-data read-reg]}] true]
+      [write-noc-data read-reg]
+      [repeat [[mod- tdm-n-cycles] {0} {7}] {nop}]}] true]
     ret
     FAIL:
     [fp-print read-reg c2]
@@ -90,7 +93,7 @@
     [busywait read-noc-data-available read-reg]
     [read-noc-data read-reg]
     blt c2 arr REMAINDER
-    [repeat [- tdm-n-cycles {1}] {nop}]
+    [repeat [- tdm-n-cycles {5}] {nop}]
     [[for arr c2 [* {4} tx-rx-n-unroll] {
       [join
         tx-rx-n-unroll
@@ -104,7 +107,8 @@
     nop
     [[for arr arr-end {4} {
       [read-noc-data read-reg]
-      sw read-reg 0(arr)}] true]
+      sw read-reg 0(arr)
+      [repeat [[mod- tdm-n-cycles] {0} {7}] {nop}]}] true]
     ret}]]]]
 
 [[file {transmit, receive, transmit_arr, receive_arr, do_test_nops} {
