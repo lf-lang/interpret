@@ -1,0 +1,11 @@
+[stdlib [mu [] [fpconfig [mu []
+[[print {
+#include <stdint.h>
+void transmit(uint32_t receiver, uint32_t word);
+uint32_t receive();
+void transmit_arr(uint32_t receiver, uint32_t* a, uint32_t nwords);
+void receive_arr(uint32_t* a, uint32_t nwords);
+[unrolltext max-num-test-nops [lam [(n)] {void do_test_nops[id n]();
+}]]
+#define N [id benchmark-n]
+}]]]]]]

@@ -1,0 +1,132 @@
+[stdlib [mu [] [ctrl [mu [] [flexpret [mu [] [fpconfig [mu[]
+[def (noc-base-address)
+  {0x40000020}]
+[def (load-noc-base-address) [lam [(r output!)]
+  {li r 0x40000020}]]
+[def (write-noc-data) [lam [(noc-base input!)] [lam [(data input!)] [[cycles! {1}] {
+  sw data 4(noc-base)}]]]]
+[def (read-noc-data) [lam [(noc-base input!)] [lam [(data output!)] [[cycles! {2}] {
+  lw data 4(noc-base)}]]]]
+[def (write-noc-addr) [lam [(noc-base input!)] [lam [(addr input!)] [[cycles! {1}] {
+  sw addr 8(noc-base)}]]]]
+[def (read-noc-data-available) [lam [(noc-base input!)] [lam [(result output!)] [[cycles! {3}] {
+  lw result 0(noc-base)
+  andi result result 2}]]]]
+[def (read-noc-tx-ready) [lam [(noc-base input!)] [lam [(result output!)] {
+  lw result 0(noc-base)
+  andi result result 1}]]]
+[def (using-noc) [lam [(noc-base input!) (moo [lam! {0}])]
+  [def (write-noc-data       ) [write-noc-data        noc-base]]
+  [def (read-noc-data        ) [read-noc-data         noc-base]]
+  [def (write-noc-addr       ) [write-noc-addr        noc-base]]
+  [def (read-noc-data-available) [read-noc-data-available noc-base]]
+  [def (read-noc-tx-ready    ) [read-noc-tx-ready     noc-base]]
+  {
+    [load-noc-base-address noc-base]
+    [moo]}]]
+[def (transmit) [lam [(receiver input!) (word input!)]
+  [def (c0 clobber!) {t1}]
+  [using-noc {t0} [mu [] {
+    [busywait read-noc-tx-ready c0]
+    [write-noc-addr receiver]
+    [write-noc-data word]
+    ret}]]]]
+[def (receive) [lam [(result output!)]
+  [def (c0 clobber!) {t1}]
+  [using-noc {t0} [mu [] {
+    [busywait read-noc-data-available c0]
+    [read-noc-data result]
+    ret}]]]]
+
+[def (transmit_arr) [lam [(receiver input!) (arr input!) (length input!)]
+  [def (arr-end clobber!) {t1}]
+  [def (read-reg clobber!) {t2}]
+  [def (c2 clobber!) {t3}]
+  [using-noc {t0} [mu [] {
+    slli arr-end length 2
+    add arr-end arr-end arr
+    [busywait read-noc-tx-ready read-reg]
+    [write-noc-addr receiver]
+    csrr c2 csr-coreid
+    [write-noc-data c2]
+    [fp-print c2 read-reg]
+    [busywait read-noc-data-available read-reg]
+    [read-noc-data read-reg]
+    [/* {bne read-reg c2 FAIL}]
+    addi c2 arr-end [* {-4} tx-rx-n-unroll]
+    addi c2 c2 1
+    [write-noc-data {zero}]
+    blt c2 arr REMAINDER
+    [repeat~ [- tdm-n-cycles {4}] {nop}]
+    [[for arr c2 [* {4} tx-rx-n-unroll] {
+      [join
+        tx-rx-n-unroll
+        [repeat [- tdm-n-cycles {3}] {nop}]
+        [lam [(i num!)] [[cycles! {3}] {
+          lw read-reg [* i {4}](arr)
+          [write-noc-data read-reg]}]]]
+      [repeat [[mod- tdm-n-cycles] {0} {7}] {nop}]}] true]
+    REMAINDER:
+    nop
+    nop
+    [[for arr arr-end {4} {
+      lw read-reg 0(arr)
+      [write-noc-data read-reg]
+      [repeat [[mod- tdm-n-cycles] {0} {7}] {nop}]}] true]
+    ret
+    FAIL:
+    [fp-print read-reg c2]
+    [fp-print-int {666} read-reg c2]}]]]]
+[def (receive_arr) [lam [(arr input!) (length input!)]
+  [def (arr-end) {t1}]
+  [def (read-reg) {t2}]
+  [def (c2 clobber!) {t3}]
+  [using-noc {t0} [mu [] {
+    [busywait read-noc-data-available read-reg]
+    [read-noc-data read-reg]
+    [write-noc-addr read-reg]
+    [write-noc-data read-reg]
+    slli arr-end length 2
+    add arr-end arr-end arr
+    addi c2 arr-end [* {-4} tx-rx-n-unroll]
+    addi c2 c2 1
+    [busywait read-noc-data-available read-reg]
+    [read-noc-data read-reg]
+    blt c2 arr REMAINDER
+    [repeat~ [- tdm-n-cycles {5}] {nop}]
+    [[for arr c2 [* {4} tx-rx-n-unroll] {
+      [join
+        tx-rx-n-unroll
+        [repeat [- tdm-n-cycles {3}] {nop}]
+        [lam [(i num!)] [[cycles! {3}] {
+          [read-noc-data read-reg]
+          sw read-reg [* {4} i](arr)}]]]
+      [repeat [[mod- tdm-n-cycles] {0} {7}] {nop}]}] true]
+    REMAINDER:
+    nop
+    nop
+    [[for arr arr-end {4} {
+      [read-noc-data read-reg]
+      sw read-reg 0(arr)
+      [repeat [[mod- tdm-n-cycles] {0} {7}] {nop}]}] true]
+    ret}]]]]
+
+[[file
+  {transmit, receive, transmit_arr, receive_arr, [unrolltext max-num-test-nops [lam [(n)] {do_test_nops[id n], }]]}
+  {
+transmit:  // receiver, word (-> void)
+  [transmit {a0} {a1}]
+receive:   // -> uint32_t
+  [receive {a0}]
+transmit_arr:  // uint32_t receiver, uint32_t* a, uint32_t nwords -> void
+  [transmit_arr {a0} {a1} {a2}]
+receive_arr:   // uint32_t* a, uint32_t nwords -> void
+  [receive_arr {a0} {a1}]
+[unroll max-num-test-nops [lam [(n)]
+  [def (label) {do_test_nops[id n]}]
+  {
+  [id label]:
+    [repeat~ n {nop
+    }]
+    ret}]]
+}]]]]]]]]]]
