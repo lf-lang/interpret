@@ -9,8 +9,10 @@
 
 #define UNROLLNOPS(MACRO) { MACRO(0) } { MACRO(1) } { MACRO(2) } { MACRO(3) } { MACRO(4) } { MACRO(5) } { MACRO(6) } { MACRO(7) } { MACRO(8) } { MACRO(9) } // { MACRO(10) } { MACRO(11) } { MACRO(12) } { MACRO(13) } { MACRO(14) }
 
-#define SENDER_CORE_ID 3
+#define SENDER_CORE_ID 0
 #define RECEIVER_CORE_ID 1
+
+const int max_sender_offset = 20;
 
 uint32_t to_transmit[N];
 uint32_t to_receive[N];
@@ -20,22 +22,22 @@ static inline int sync() {
 }
 
 static void do_send() {
-    // fill_to_transmit takes a long time, which ensures that the receiver is ready
-    // when it comes time to take a measurement
-    #define SENDBODY(N) \
-        _fp_print(N); \
-        sync(); \
-        do_test_nops ## N(); \
-        uint32_t t0 = rdcycle(); \
-        transmit(RECEIVER_CORE_ID, t0);
     for (int i = 0; i < 10; i++) {
-        UNROLLNOPS(SENDBODY)
+        for (int j = 0; j < max_sender_offset; j++) {
+            _fp_print(max_sender_offset - 1 - j);
+            sync();
+            do_test_nops9();
+            do_test_nops9();
+            do_test_nops9();
+            uint32_t t0 = rdcycle();
+            transmit(RECEIVER_CORE_ID, t0);
+        }
     }
 }
 
 static void do_receive() {
     #define RECEIVEBODY(N) \
-        for (int i = 0; i < 10; i++) { \
+        for (int j = 0; j < 20; j++) { \
             _fp_print(N); \
             sync(); \
             do_test_nops ## N(); \

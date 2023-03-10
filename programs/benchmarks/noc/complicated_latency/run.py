@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
 max_offset = 10
+tdm_max_offset = 20
 
-sender = 3
+sender = 0
 receiver = 1
 
 import subprocess
+import matplotlib
+import matplotlib.pyplot as plt
 
 subprocess.check_output(["make"])
 output = subprocess.run(["fp-emu"], stderr=subprocess.PIPE, stdout=subprocess.PIPE).stderr.decode("utf-8")
@@ -19,10 +22,24 @@ print(sender_offsets)
 print(receiver_offsets)
 print(receiver_measurements)
 
-table = [[0 for _ in range(max_offset)] for _ in range(max_offset)]
+table = [[[] for _ in range(max_offset)] for _ in range(tdm_max_offset)]
 for sender_offset, receiver_offset, measurement in zip(sender_offsets, receiver_offsets, receiver_measurements):
-    table[sender_offset][receiver_offset] = measurement
-tex = " & ".join(str(i) for i in range(max_offset)) + "\\\\\n"
+    table[sender_offset][receiver_offset] += [measurement]
+tex = " & ".join(str(i) for i in range(tdm_max_offset)) + "\\\\\n"
 for i, row in enumerate(table):
-    tex += f"{i} & {' & '.join([str(k) for k in row])} \\\\\n"
+    tex += f"{i} & {' & '.join([f'{k}' for k in row])} \\\\\n"
 print(tex)
+
+x = [i for i in range(max_offset)]
+y0 = [min(s[i] for s in table) for i in x]
+y1 = [max(s[i] for s in table) for i in x]
+
+matplotlib.rcParams['font.family'] = 'Nimbus Roman'
+plt.plot(x, y1, linestyle='--', linewidth=1, marker='o', color='firebrick', label='maximum latency')
+plt.plot(x, y0, linestyle=':' , linewidth=1, marker='+', color='brown', label='minimum latency')
+plt.legend()
+plt.title("NoC Latency")
+plt.xlabel("Offset of Receiving Busy-Wait Loop (Cycles)")
+plt.ylabel("Measured Latency (Cycles)")
+plt.savefig("latencies.svg")
+plt.show()

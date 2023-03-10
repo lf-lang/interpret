@@ -14,10 +14,5 @@ void do_test_nops6();
 void do_test_nops7();
 void do_test_nops8();
 void do_test_nops9();
-void do_test_nops10();
-void do_test_nops11();
-void do_test_nops12();
-void do_test_nops13();
-void do_test_nops14();
 
 #define N 100

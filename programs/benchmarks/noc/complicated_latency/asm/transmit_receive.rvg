@@ -117,15 +117,9 @@ transmit:  // receiver, word (-> void)
   [transmit {a0} {a1}]
 receive:   // -> uint32_t
   [receive {a0}]
-transmit_arr:  // uint32_t receiver, uint32_t* a, uint32_t nwords -> void
-  [transmit_arr {a0} {a1} {a2}]
-receive_arr:   // uint32_t* a, uint32_t nwords -> void
-  [receive_arr {a0} {a1}]
-[unroll max-num-test-nops [lam [(n)]
-  [def (label) {do_test_nops[id n]}]
-  {
-  [id label]:
-    [repeat~ n {nop
-    }]
-    ret}]]
+[[[fold-range {1} {0} max-num-test-nops] {ret}]
+  [lam [(acc) (i)] {
+      [id {nop}]
+    do_test_nops[id i]:
+      [id acc]}]]
 }]]]]]]]]]]
