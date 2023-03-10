@@ -21,13 +21,13 @@ static void fill_to_transmit() {
 static void transmit(uint32_t receiver, uint32_t* a) {
     for (int i = 0; i < N; i++) {
         // _fp_print(a[i]);
-        noc_send(receiver, a[i]);
+        noc_send(receiver, a[i], TIMEOUT_FOREVER);
     }
 }
 
 static void receive() {
     for (int i = 0; i < N; i++) {
-        to_receive[i] = noc_receive();
+        noc_receive(&to_receive[i], TIMEOUT_FOREVER);
         // _fp_print(to_receive[i]);
     }
 }

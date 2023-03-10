@@ -104,9 +104,9 @@ val makePlot = (latencies: Results) => {
 
     val plot = xyplot(someData)(
                 par(
-                main="Distribution of latencies",
-                xlab="latency",
-                ylab="frequency"
+                main="Latency Distribution",
+                xlab="Latency (cycles)",
+                ylab="Number of Observations"
                 )
             )
     println("Writing to " + Path.of(sys.env("FP_ROOT"), "temp.png"))

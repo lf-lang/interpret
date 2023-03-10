@@ -3,7 +3,7 @@
 import subprocess
 import pandas as pd
 
-NCORES = 4
+NCORES = 9
 
 configs = {
     4: (5, 16),

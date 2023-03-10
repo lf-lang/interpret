@@ -48,65 +48,142 @@ LOOP_tZvLUwyjwy:
     addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
 LOOP_xx2KBeM1TM:
     lw t2, 0(a1)
     sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 4(a1)
     sw t2, 4(t0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 8(a1)
     sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 12(a1)
     sw t2, 4(t0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 16(a1)
     sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 20(a1)
     sw t2, 4(t0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 24(a1)
     sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 28(a1)
     sw t2, 4(t0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 32(a1)
     sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 36(a1)
     sw t2, 4(t0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 40(a1)
     sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 44(a1)
     sw t2, 4(t0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 48(a1)
     sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 52(a1)
     sw t2, 4(t0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 56(a1)
     sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 60(a1)
@@ -117,9 +194,14 @@ LOOP_xx2KBeM1TM:
     addi a1, a1, 64
     blt a1, t3, LOOP_xx2KBeM1TM
 REMAINDER_dCcIYk9YE4:
+    addi zero, zero, 0
+    addi zero, zero, 0
 LOOP_oSVW8oFZ1y:
     lw t2, 0(a1)
     sw t2, 4(t0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi a1, a1, 4
     blt a1, t1, LOOP_oSVW8oFZ1y
     jalr zero, ra, 0
@@ -157,65 +239,141 @@ LOOP_syOGwjVTp7:
     addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
 LOOP_3gNwMs2sHd:
     lw t2, 4(t0)
     sw t2, 0(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 4(a0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 8(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 12(a0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 16(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 20(a0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 24(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 28(a0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 32(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 36(a0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 40(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 44(a0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 48(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 52(a0)
     addi zero, zero, 0
     addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     lw t2, 4(t0)
     sw t2, 56(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     lw t2, 4(t0)
@@ -231,10 +389,20 @@ REMAINDER_RI1ag3enLg:
 LOOP_ABkSUJRNgK:
     lw t2, 4(t0)
     sw t2, 0(a0)
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi a0, a0, 4
     blt a0, t1, LOOP_ABkSUJRNgK
     jalr zero, ra, 0
 do_test_nops:
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
+    addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0
     addi zero, zero, 0

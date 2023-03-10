@@ -12,11 +12,11 @@
 #include <flexpret_noc.h>
 #include <stdlib.h>
 
-#define N 100
+#define N 1000
 // 1 << LOG2_OF_A_LONG_TIME should be much greater than the number of cycles required to run
 // one iteration of the benchmark. I think it takes less than 512 cycles to run one iteration
 // of the benchmark.
-#define LOG2_OF_A_LONG_TIME 11
+#define LOG2_OF_A_LONG_TIME 8
 
 static int main_of(uint32_t core);
 
@@ -33,13 +33,14 @@ static int send_main(uint32_t receiver) {
         unsigned long end_time = rdcycle() + min_delay + additional_delay;
         while (rdcycle() < end_time) {}
         unsigned long t0 = rdcycle(); // benchmark start
-        noc_send(receiver, t0);
+        noc_send(receiver, t0, TIMEOUT_FOREVER);
     }
 }
 
 static int receive_main(uint32_t sender) {
     for (uint32_t i = 0; i < N; i++) {
-        uint32_t t0 = noc_receive();
+        uint32_t t0;
+        noc_receive(&t0, TIMEOUT_FOREVER);
         uint32_t t1 = rdcycle(); // benchmark end
         _fp_print((sender + 1) * 1000000 + t1 - t0);
     }
