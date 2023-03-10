@@ -49,7 +49,6 @@
     [write-noc-addr receiver]
     csrr c2 csr-coreid
     [write-noc-data c2]
-    [fp-print c2 read-reg]
     [busywait read-noc-data-available read-reg]
     [read-noc-data read-reg]
     [/* {bne read-reg c2 FAIL}]

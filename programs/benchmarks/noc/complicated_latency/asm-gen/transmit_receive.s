@@ -31,10 +31,6 @@ LOOP_N840jLsMYh:
     sw a0, 8(t0)
     csrrs t3, 0x510, zero
     sw t3, 4(t0)
-    lui t2, 764588
-    addi t2, t2, -1366
-    csrrw zero, 0x51e, t2
-    csrrw zero, 0x51e, t3
 LOOP_tZvLUwyjwy:
     lw t2, 0(t0)
     andi t2, t2, 2
