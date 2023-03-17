@@ -25,6 +25,9 @@ class TopIO(topCfg: TopConfig) extends Bundle {
 }
 
 class Top(topCfg: TopConfig) extends Module {
+  // Write flexpret_config.h and flexpret_config.ld to file
+  topCfg.coreCfgs(0).writeConfigHeaderToFile("flexpret/programs/lib/include/flexpret_config.h")
+  topCfg.coreCfgs(0).writeLinkerConfigToFile("flexpret/programs/lib/linker/flexpret_config.ld")
   val io = IO(new TopIO(topCfg))
   // Flexpret cores
   val cores = for (i <- 0 until topCfg.nCores) yield Module(new Core(topCfg.coreCfgs(i)))

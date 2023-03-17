@@ -1,21 +1,15 @@
-#include <stdbool.h>
-
-#include "flexpret_io.h"
-#include "flexpret_stdio.h"
-#include "flexpret_uart.h"
-#include <flexpret_assert.h>
+#include "interpret.h"
 
 #define SYNC_ID_LEN 2
 #define LEN_FIELD_LEN 2
-#define APP_START 0x00001000
-// #define DBG
+#define APP_START ISPM_APP_START
 
 #ifdef DBG
 #define DBG_PRINT(x) do {_fp_print(x);} while(0)
 #else
 #define DBG_PRINT(x) do {} while(0)
 #endif
-void (*application)(void) = (void (*)())APP_START;
+void (*application)(void) = (void (*)()) APP_START;
 int bootloader(void);
 
 typedef enum {
@@ -98,7 +92,10 @@ int bootloader(void) {
                 DBG_PRINT(recv);
                 recv_buffer[idx++] = recv;
                 if (idx == LEN_FIELD_LEN) {
-                    len = recv_buffer[1] << 8 | recv_buffer[0];        
+                    len = recv_buffer[1] << 8 | recv_buffer[0];
+                    DBG_PRINT(66);
+                    DBG_PRINT(len);
+                    DBG_PRINT(66);
                     app_recv_state = RECV_DATA;
                     idx = 0;
                     gpo_clear(0, 2);
@@ -112,7 +109,7 @@ int bootloader(void) {
                 instr = instr | (((unsigned int) recv) << 8*byte_idx);
                 if (byte_idx-- == 0) {
                     DBG_PRINT(3);
-                    DBG_PRINT(app_ptr);
+                    DBG_PRINT((uint32_t) app_ptr);
                     DBG_PRINT(instr);
                     *(app_ptr++) = instr;
                     instr = 0;

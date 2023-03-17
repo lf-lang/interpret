@@ -1,6 +1,4 @@
-#include <stdint.h>
-#include <flexpret_io.h>
-#include <flexpret_uart.h>
+#include "interpret.h"
 
 int main() {
     int core_id = read_csr(CSR_COREID);
@@ -8,6 +6,6 @@ int main() {
     if (core_id == 0) {
         uart_send(42);
     }
-    while(1) {}
+    delay_for(MSEC(2));
 }
 

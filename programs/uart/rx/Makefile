@@ -1,4 +1,4 @@
-NAME := hello_noc
+NAME := uart_rx
 APP_SOURCES = *.c
 
 include $(INTERPRET_ROOT_DIR)/Makefrag

@@ -1,8 +1,4 @@
-#include <stdint.h>
-#include <flexpret_io.h>
-#include <flexpret_noc.h>
-#include <flexpret_thread.h>
-#include <flexpret_assert.h>
+#include "interpret.h"
 
 int main0();
 int main1();

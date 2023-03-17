@@ -1,7 +1,4 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <flexpret_io.h>
-#include <flexpret_noc.h>
+#include "interpret.h"
 
 #define PING_PONG_LIMIT 10
 

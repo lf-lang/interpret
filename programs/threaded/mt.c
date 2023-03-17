@@ -1,11 +1,5 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include <flexpret_stdio.h>
-#include <flexpret_csrs.h>
+#include "interpret.h"
 
-#include <flexpret_thread.h>
-#include <flexpret_assert.h>
-#include <flexpret_lock.h>
 
 void* t1(void *) {
     print_str("Hello from t1\n");
@@ -48,6 +42,7 @@ int main() {
     thread_join(tid3, &etid3);
     print_str("t3 done\n");
 
+    delay_for(MSEC(1));
     return 0;
     }
 }

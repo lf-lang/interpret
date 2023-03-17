@@ -6,8 +6,6 @@ SCRIPTS_DIR = flexpret/scripts
 BUILD_DIR = build
 RESOURCE_DIR = flexpret/src/main/resources
 
-
-
 # Compiler options.
 CXX = g++
 CXXFLAGS = -g -O2

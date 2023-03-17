@@ -1,11 +1,8 @@
-#include <flexpret_csrs.h>
-#include <flexpret_io.h>
-#include <flexpret_time.h>
-#include <flexpret_stdio.h>
-
+#include "interpret.h"
 
 void main(void) {
     int core_id = read_coreid();
+    print_str("Hello world!");
     int cnt = 0;
     if (core_id == 0) {
         while(1) {
