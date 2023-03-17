@@ -1,5 +1,5 @@
 export INTERPRET_ROOT_DIR=$(pwd)
-export FLEXPRET_ROOT_DIR=$(IP_ROOT)/flexpret
+export FLEXPRET_ROOT_DIR=$INTERPRET_ROOT_DIR/flexpret
 
 # Put the generated emulator on the path
-export PATH="$PATH:$IP_ROOT/emulator"
+export PATH="$PATH:$INTERPRET_ROOT_DIR/emulator"
