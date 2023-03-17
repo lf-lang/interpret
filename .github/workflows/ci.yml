@@ -31,7 +31,7 @@ jobs:
           echo "INTERPRET_ROOT_DIR=$root" >> $GITHUB_ENV
       - name: Build and test FlexPRET
         run : |
-          cd $(FLEXPRET_ROOT_DIR)
+          cd $FLEXPRET_ROOT_DIR
           make clean && make emulator
           make test
       - name: Build InterPRET
