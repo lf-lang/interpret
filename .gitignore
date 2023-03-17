@@ -1,11 +1,14 @@
 .bsp/
 .metals/
+.idea/
 .vscode/
 project/
 target/
 build/
 emulator/*.v
 emulator/obj_dir
+emulator/ip-emu
+emulator/ip-verilator
 .bloop
 
 # Generated files
@@ -17,7 +20,6 @@ emulator/obj_dir
 **/*.map
 **/*.orig
 **/*.dump
-**/fp-emu
 **/*.fir
 **/*.app
 **/*.binary.txt

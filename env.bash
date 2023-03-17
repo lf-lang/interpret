@@ -1,9 +1,5 @@
-export FP_ROOT=$(pwd)
+export INTERPRET_ROOT_DIR=$(pwd)
+export FLEXPRET_ROOT_DIR=$(IP_ROOT)/flexpret
 
-# Put riscv gcc compiler on the path
-# export PATH="$PATH:/opt/riscv32/bin"
-
-# Put riscv_compile.sh and riscv_clean.sh on the path
-export PATH="$PATH:$FP_ROOT/flexpret/scripts/c"
 # Put the generated emulator on the path
-export PATH="$PATH:$FP_ROOT/emulator"
+export PATH="$PATH:$IP_ROOT/emulator"
