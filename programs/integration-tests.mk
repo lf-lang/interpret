@@ -13,6 +13,7 @@ TEST_SRCS= \
 TEST_RESULTS = $(patsubst $(TEST_DIR)/%,$(TEST_DIR)/%/test_res.txt,$(TEST_SRCS))
 
 RES_PARSER := $(INTERPRET_ROOT_DIR)/programs/scripts/test_result_parse.sh
+IP_EMU := $(INTERPRET_ROOT_DIR)/emulator/ip-emu
 
 .PHONY: integration-tests
 integration-tests: $(TEST_RESULTS) bootloader-test
@@ -23,13 +24,13 @@ integration-tests: $(TEST_RESULTS) bootloader-test
 $(TEST_DIR)/%/test_res.txt: $(TEST_DIR)/%
 	@echo Executing $^
 	@cd $^; make recompile
-	@cd $^; if ! (make run > test_res.txt 2>&1); then continue; fi
+	@cd $^; if ! (make run | tee test_res.txt); then continue; fi
 	@$(RES_PARSER) $@
 
 bootloader-test:
 	@cd programs/helloWorld; make clean; make app;
 	@cd programs/bootloader; make recompile; 
-	@cd programs/bootloader; if ! (ip-emu bootloader.mem ../helloWorld/helloworld.app > test_res.txt 2>&1); then continue; fi
+	@cd programs/bootloader; if ! ($(IP_EMU) bootloader.mem ../helloWorld/helloworld.app | test_res.txt ); then continue; fi
 	@cd programs/bootloader; $(RES_PARSER) test_res.txt
 
 .PHONY: integration-clean
