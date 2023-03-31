@@ -1,0 +1,39 @@
+#!/bin/bash
+# Simple wrapper around the ip-verilator emulation
+
+# Get the directory of the script and the verilator emulation
+script_dir=$(dirname "$0")
+script_name=$(basename "$0")
+emu="$script_dir/ip-verilator"
+working_dir=$(pwd)
+
+echo "Running InterPRET emulator:"
+
+# Check if exactly one argument is provided
+if [ $# -lt 1 ]; then
+  echo "Usage: $script_name ispm-file [uart_file] [--trace]"
+  exit 1
+fi
+
+# Check if the file exists
+if [ ! -f "$1" ]; then
+  echo "File not found: $1"
+  exit 1
+fi
+
+# Check if the file exists
+if [ ! -f "$emu" ]; then
+  echo "Did not find verilator emulator at: $emu"
+  exit 1
+fi
+
+# Get the filename from the path
+filename=$(basename "$1")
+
+# Copy the file to the current directory
+cp "$1" "$working_dir/ispm.mem"
+
+# Excute the verilator emulation
+echo "${@:2}"
+"$script_dir/ip-verilator" "${@:2}"
+
