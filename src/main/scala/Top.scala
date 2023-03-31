@@ -10,9 +10,9 @@ import s4noc.{Config, S4NoCTop}
 
 case class TopConfig(
   coreCfgs : Seq[FlexpretConfiguration],
-  nCores : Int,
-  freq : Int,
-  emulation: Boolean,
+  nCores : Int = 4,
+  freq : Int = 50000000,
+  emulation: Boolean = true,
 ){
 }
 

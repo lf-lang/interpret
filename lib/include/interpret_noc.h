@@ -4,6 +4,16 @@
 #include <stdint.h>
 #include <flexpret_types.h>
 
+// A 32 bit header which is always sent first
+struct noc_header {
+  unsigned int write : 1;
+  unsigned int port : 14;     // 14 bits for the package type
+  unsigned int length : 14;  // 14 bits for the package length
+  unsigned int flags : 3;    // 3 bits for package flags
+};
+
+#define NOC_HEADER_INIT(write, port, length, flags) { .write=write, .port=port, .length=length, .flags=flags }
+
 
 /**
  * @brief Send a word over the NoC. Depending on the value of the timeout, the 
@@ -18,7 +28,7 @@
  *
  * @return fp_ret_t: FP_SUCCESS, if sending is successful, FP_FAILIURE otherwise
  **/
-fp_ret_t noc_send(uint32_t addr, uint32_t data, timeout_t timeout);
+fp_ret_t noc_send(uint32_t addr, uint32_t data);
 
 
 /**
@@ -34,6 +44,7 @@ fp_ret_t noc_send(uint32_t addr, uint32_t data, timeout_t timeout);
  *
  * @return fp_ret_t: FP_SUCCESS, if sending is successful, FP_FAILIURE otherwise
  **/
-fp_ret_t noc_receive(uint32_t* data, timeout_t timeout); 
+fp_ret_t noc_receive(uint32_t* data);
+
 
 #endif
