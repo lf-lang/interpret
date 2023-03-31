@@ -42,7 +42,7 @@ verilog_raw: $(VERILOG_RAW)
 
 # --no-dedup flag is to make it possible to load programs directly into the ISpms
 $(VERILOG_RAW): 
-	sbt 'run $(CORE_CONFIG) $(SOC_CONFIG) --no-dedup --target-dir $(BUILD_DIR)'
+	sbt 'run verilator $(CORE_CONFIG) $(SOC_CONFIG) --no-dedup --target-dir $(BUILD_DIR)'
 
 # FPGA Verilog generation
 # FPGA_SRC_DIR = $(FPGA_DIR)/generated-$(CORE_CONFIG)

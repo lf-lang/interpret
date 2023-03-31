@@ -24,13 +24,13 @@ integration-tests: $(TEST_RESULTS) bootloader-test
 $(TEST_DIR)/%/test_res.txt: $(TEST_DIR)/%
 	@echo Executing $^
 	@cd $^; make recompile
-	@cd $^; if ! (make run | tee test_res.txt); then continue; fi
+	@cd $^; make run | tee test_res.txt
 	@$(RES_PARSER) $@
 
 bootloader-test:
 	@cd programs/helloWorld; make clean; make app;
 	@cd programs/bootloader; make recompile; 
-	@cd programs/bootloader; if ! ($(IP_EMU) bootloader.mem ../helloWorld/helloworld.app | test_res.txt ); then continue; fi
+	@cd programs/bootloader; $(IP_EMU) bootloader.mem ../helloWorld/helloworld.app | tee test_res.txt
 	@cd programs/bootloader; $(RES_PARSER) test_res.txt
 
 .PHONY: integration-clean

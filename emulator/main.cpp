@@ -97,6 +97,11 @@ int main(int argc, char* argv[]) {
       trace->dump(10*timestamp);
       trace->flush();
     }
+
+    if (top->io_stop) {
+      std::cout <<"Verilator received stop signal from InterPRET" <<std::endl;
+      break;
+    }
   }
   
   if (trace_enabled) {
