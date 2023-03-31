@@ -34,10 +34,8 @@ jobs:
           cd $FLEXPRET_ROOT_DIR
           make clean && make emulator
           make test
-      - name: Build InterPRET
+      - name: Build and test InterPRET
         run: |
           make emulator N_CORES=4 THREADS=4 FLEX=false TRACE=0
-      - name: Run unit-tests
-        run: make unit-tests
-      - name: Run integration tests
-        run: make integration-tests
+          make unit-tests
+          make integration-tests
