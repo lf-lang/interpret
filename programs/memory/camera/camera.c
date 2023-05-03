@@ -5,14 +5,15 @@
 #include <flexpret_time.h>
 #include <flexpret_noc.h>
 
-// Image size = 13 MB, based on the datasheet of SONY IMX214,
+// Image size = 640x480, based on the datasheet of OMNIVISION OV7251 B&W,
 // the camera used on the Mars helicopter ingenuity.
-#define WIDTH       4224
-#define HEIGHT      3200
+#define WIDTH       640
+#define HEIGHT      480
 #define PIXEL_MAX   255
-#define BATCH_SIZE  16      // Each batch contains 16 pixels
+#define BATCH_SIZE  32      // Each batch contains 32 pixels
+#define FPS_VGA     120     // FPS for capturing VGA
 
-typedef unsigned short pixel_t; // Assuming 16-bit pixel depth.
+typedef uint8_t pixel_t;    // each pixel is 8-bit grayscale for B&W camera
 
 int image_receiver();
 int image_processor();
@@ -22,8 +23,8 @@ int main() {
     _fp_print(core_id);
 
     switch(core_id) {
-        case 0: image_receiver(30, 2); break;
-        case 1: image_receiver(60, 3); break;
+        case 0: image_receiver(FPS_VGA, 2); break;
+        case 1: image_receiver(FPS_VGA, 3); break;
         case 2: image_processor();  break;
         case 3: image_processor();  break;
         default: _fp_print(666); //ERROR
@@ -31,12 +32,12 @@ int main() {
 }
 
 /**
- * @brief A function simulating reading a frame from a camera.
+ * @brief A function simulating reading a frame from a B&W camera.
  * 
- * A 13 MB image has the dimension of 4224x3200.
- * Storing them in batches of 16 pixels
+ * A 640x480 image requires 307200 pixels.
+ * Storing them in batches of 32 pixels
  * (i.e., 256 bits = 1 DRAM memory request)
- * results in 844800 WRITE memory requests.
+ * results in 9600 WRITE memory requests.
  * 
  * @param image A pointer to the image to be stored in the DRAM.
  */
@@ -44,32 +45,23 @@ void receive_image(pixel_t *image) {
     uint64_t *batch = (uint64_t *)image;
 
     // Assign dummy values to each pixel. For simplicity,
-    // we'll use a fixed pattern: 100 for R, 200 for G, and 150 for B.
+    // we'll use a fixed pattern: 150 for grayscale.
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x += BATCH_SIZE) {
-            uint64_t batch_pixels[BATCH_SIZE / 4] = {0};
+            uint64_t batch_pixels[BATCH_SIZE / 8] = {0};
 
             for (int b = 0; b < BATCH_SIZE; b++) {
-                int global_x = x + b;
-                pixel_t pixel_value;
-
-                if ((global_x % 2) == (y % 2)) {       // Green pixel # = 3379200
-                    pixel_value = 200; // Dummy value
-                } else if (global_x % 2) {             // Red pixel #   = 5068800
-                    pixel_value = 100; // Dummy value
-                } else {                               // Blue pixel #  = 5068800
-                    pixel_value = 150; // Dummy value
-                }
+                pixel_t pixel_value = 150; // Dummy grayscale value
 
                 // Set the b-th pixel in the batch
-                int batch_index = b / 4;
-                int pixel_index = b % 4;
-                batch_pixels[batch_index] |= (uint64_t)pixel_value << (pixel_index * 16);
+                int batch_index = b / 8;
+                int pixel_index = b % 8;
+                batch_pixels[batch_index] |= (uint64_t)pixel_value << (pixel_index * 8);
             }
 
             // Store the batch of pixels
-            for (int b = 0; b < BATCH_SIZE / 4; b++) {
-                batch[(y * WIDTH + x) / 4 + b] = batch_pixels[b];
+            for (int b = 0; b < BATCH_SIZE / 8; b++) {
+                batch[(y * WIDTH + x) / 8 + b] = batch_pixels[b];
             }
         }
     }
@@ -81,8 +73,6 @@ void receive_image(pixel_t *image) {
  * @param image 
  */
 void invert_color(pixel_t *image) {
-    // Assign dummy values to each pixel. For simplicity,
-    // we'll use a fixed pattern: 100 for R, 200 for G, and 150 for B.
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
             pixel_t *pixel = image + (y * WIDTH + x);  // Compute the address of the pixel in the one-dimensional array.
@@ -108,7 +98,7 @@ int image_receiver(uint32_t fps, uint32_t downstream_worker) {
         uint32_t period = 1000000000LL / fps;
         delay_for(period);
 
-        // Send the pointer to core 2.
+        // Send the pointer to downstream_worker.
         noc_send(downstream_worker, (uint32_t)image, TIMEOUT_FOREVER);
     }
     return 0;
@@ -118,11 +108,11 @@ int image_processor() {
     while (1) {
         uint32_t *data;
 
-        // Receive a pointer from core 0 and process the image.
+        // Receive a pointer from an upstream receiver.
         noc_receive(data, TIMEOUT_FOREVER);
 
-        // ... Process the image.
-        pixel_t *image = (pixel_t*) data;
+        // Process the image by inverting color.
+        pixel_t *image = (pixel_t*)data;
         invert_color(image);
 
         // Free the image.
