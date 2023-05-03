@@ -10,6 +10,7 @@
 #define WIDTH       4224
 #define HEIGHT      3200
 #define PIXEL_MAX   255
+#define BATCH_SIZE  16      // Each batch contains 16 pixels
 
 typedef unsigned short pixel_t; // Assuming 16-bit pixel depth.
 
@@ -32,24 +33,43 @@ int main() {
 /**
  * @brief A function simulating reading a frame from a camera.
  * 
- * @param image 
+ * A 13 MB image has the dimension of 4224x3200.
+ * Storing them in batches of 16 pixels
+ * (i.e., 256 bits = 1 DRAM memory request)
+ * results in 844800 WRITE memory requests.
+ * 
+ * @param image A pointer to the image to be stored in the DRAM.
  */
-void read_image(pixel_t *image) {
+void receive_image(pixel_t *image) {
+    uint64_t *batch = (uint64_t *)image;
+
     // Assign dummy values to each pixel. For simplicity,
     // we'll use a fixed pattern: 100 for R, 200 for G, and 150 for B.
     for (int y = 0; y < HEIGHT; y++) {
-        for (int x = 0; x < WIDTH; x++) {
-            pixel_t *pixel = image + (y * WIDTH + x);  // Compute the address of the pixel in the one-dimensional array.
+        for (int x = 0; x < WIDTH; x += BATCH_SIZE) {
+            uint64_t batch_pixels[BATCH_SIZE / 4] = {0};
 
-            if ((x % 2) == (y % 2)) {
-                // Green pixel
-                *pixel = 200;
-            } else if (x % 2) {
-                // Red pixel
-                *pixel = 100;
-            } else {
-                // Blue pixel
-                *pixel = 150;
+            for (int b = 0; b < BATCH_SIZE; b++) {
+                int global_x = x + b;
+                pixel_t pixel_value;
+
+                if ((global_x % 2) == (y % 2)) {       // Green pixel # = 3379200
+                    pixel_value = 200; // Dummy value
+                } else if (global_x % 2) {             // Red pixel #   = 5068800
+                    pixel_value = 100; // Dummy value
+                } else {                               // Blue pixel #  = 5068800
+                    pixel_value = 150; // Dummy value
+                }
+
+                // Set the b-th pixel in the batch
+                int batch_index = b / 4;
+                int pixel_index = b % 4;
+                batch_pixels[batch_index] |= (uint64_t)pixel_value << (pixel_index * 16);
+            }
+
+            // Store the batch of pixels
+            for (int b = 0; b < BATCH_SIZE / 4; b++) {
+                batch[(y * WIDTH + x) / 4 + b] = batch_pixels[b];
             }
         }
     }
@@ -82,7 +102,7 @@ int image_receiver(uint32_t fps, uint32_t downstream_worker) {
         }
 
         // Fill the image with a dummy Bayer pattern.
-        read_image(image);
+        receive_image(image);
 
         // Delay before next capture.
         uint32_t period = 1000000000LL / fps;
