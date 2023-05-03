@@ -5,13 +5,15 @@
 #include <flexpret_time.h>
 #include <flexpret_noc.h>
 
-// Image size = 640x480, based on the datasheet of OMNIVISION OV7251 B&W,
+// The numbers are based on the datasheet of OMNIVISION OV7251 B&W,
 // the camera used on the Mars helicopter ingenuity.
-#define WIDTH       640
-#define HEIGHT      480
+#define WIDTH       160
+#define HEIGHT      120
 #define PIXEL_MAX   255
 #define BATCH_SIZE  32      // Each batch contains 32 pixels
-#define FPS_VGA     120     // FPS for capturing VGA
+#define FPS_QQVGA   360     // FPS for capturing QQVGA
+#define NUM_PIXELS  (WIDTH * HEIGHT)
+#define NUM_WR_REQS (NUM_PIXELS / BATCH_SIZE)
 
 typedef uint8_t pixel_t;    // each pixel is 8-bit grayscale for B&W camera
 
@@ -23,8 +25,8 @@ int main() {
     _fp_print(core_id);
 
     switch(core_id) {
-        case 0: image_receiver(FPS_VGA, 2); break;
-        case 1: image_receiver(FPS_VGA, 3); break;
+        case 0: image_receiver(FPS_QQVGA, 2); break;
+        case 1: image_receiver(FPS_QQVGA, 3); break;
         case 2: image_processor();  break;
         case 3: image_processor();  break;
         default: _fp_print(666); //ERROR
@@ -33,11 +35,6 @@ int main() {
 
 /**
  * @brief A function simulating reading a frame from a B&W camera.
- * 
- * A 640x480 image requires 307200 pixels.
- * Storing them in batches of 32 pixels
- * (i.e., 256 bits = 1 DRAM memory request)
- * results in 9600 WRITE memory requests.
  * 
  * @param image A pointer to the image to be stored in the DRAM.
  */
