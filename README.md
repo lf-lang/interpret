@@ -19,7 +19,7 @@ source env.bash
 
 ### Build and run tests
 ```
-make tests
+make test
 ```
 The final tests, which consist of bootloading an application over serial might take a few minutes to complete.
 
