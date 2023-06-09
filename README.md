@@ -173,4 +173,4 @@ To get waveforms build the InterPRET with TRACE=1, e.g.
 `make emulator N_CORES=1 TRACE=1`
 
 ## Publications
-If you wanna use InterPRET or reference it please refer to the following article from TCRS at CPSIoTWeek 2023: https://dl.acm.org/doi/abs/10.1145/3576914.3587497
+If you want to use InterPRET or reference it please refer to the following article from TCRS at CPSIoTWeek 2023: https://dl.acm.org/doi/abs/10.1145/3576914.3587497
