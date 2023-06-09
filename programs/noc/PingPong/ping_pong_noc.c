@@ -1,7 +1,4 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <flexpret_io.h>
-#include <flexpret_noc.h>
+#include "interpret.h"
 
 #define PING_PONG_LIMIT 10
 
@@ -24,10 +21,10 @@ int main() {
             ping_pong_count += 1;
             
             // core_id sent and incremented ping_pong_count to partner_core_id
-            noc_send(partner_core_id, ping_pong_count, TIMEOUT_FOREVER);
+            noc_send(partner_core_id, ping_pong_count);
         } else {            
             // core_id received ping_pong_count from partner_core_id
-            fp_ret_t ret = noc_receive(&ping_pong_count, TIMEOUT_FOREVER);
+            fp_ret_t ret = noc_receive(&ping_pong_count);
             _fp_print(ping_pong_count);
         }
     }

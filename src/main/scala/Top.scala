@@ -10,8 +10,9 @@ import s4noc.{Config, S4NoCTop}
 
 case class TopConfig(
   coreCfgs : Seq[FlexpretConfiguration],
-  nCores : Int,
-  freq : Int
+  nCores : Int = 4,
+  freq : Int = 50000000,
+  emulation: Boolean = true,
 ){
 }
 
@@ -22,9 +23,14 @@ class TopIO(topCfg: TopConfig) extends Bundle {
     val rx = Input(Bool())
     val tx = Output(Bool())
   }
+
+  val stop = if (topCfg.emulation) Some((Output(Bool()))) else None
 }
 
 class Top(topCfg: TopConfig) extends Module {
+  // Write flexpret_config.h and flexpret_config.ld to file
+  topCfg.coreCfgs(0).writeConfigHeaderToFile("flexpret/programs/lib/include/flexpret_config.h")
+  topCfg.coreCfgs(0).writeLinkerConfigToFile("flexpret/programs/lib/linker/flexpret_config.ld")
   val io = IO(new TopIO(topCfg))
   // Flexpret cores
   val cores = for (i <- 0 until topCfg.nCores) yield Module(new Core(topCfg.coreCfgs(i)))
@@ -62,6 +68,10 @@ class Top(topCfg: TopConfig) extends Module {
   // Termination and printing logic (just for simulation)
   val regCoreDone = RegInit(VecInit(Seq.fill(topCfg.nCores)(false.B)))
   val regCorePrintNext = RegInit(VecInit(Seq.fill(topCfg.nCores)(false.B)))
+
+  if (topCfg.emulation) {
+    io.stop.get := false.B
+  }
 
   for (i <- 0 until topCfg.nCores) {
     // Drove core IO to defaults
@@ -123,6 +133,8 @@ class Top(topCfg: TopConfig) extends Module {
   // Wait until all cores are done
   when(regCoreDone.asUInt.andR) {
     printf("All cores are done terminating\n")
-    assert(false.B, "Program terminated sucessfully")
+    if (topCfg.emulation) {
+      io.stop.get := true.B
+    }
   }
 }

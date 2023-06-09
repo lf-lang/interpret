@@ -12,6 +12,9 @@ TEST_SRCS= \
 
 TEST_RESULTS = $(patsubst $(TEST_DIR)/%,$(TEST_DIR)/%/test_res.txt,$(TEST_SRCS))
 
+RES_PARSER := $(INTERPRET_ROOT_DIR)/programs/scripts/test_result_parse.sh
+IP_EMU := $(INTERPRET_ROOT_DIR)/emulator/ip-emu
+
 .PHONY: integration-tests
 integration-tests: $(TEST_RESULTS) bootloader-test
 	@echo FINISHED
@@ -20,14 +23,15 @@ integration-tests: $(TEST_RESULTS) bootloader-test
 # run the emulator on it (so env.bash must be called). And parse results 
 $(TEST_DIR)/%/test_res.txt: $(TEST_DIR)/%
 	@echo Executing $^
-	@cd $^; make rebuild
-	@cd $^; if ! (fp-emu > test_res.txt 2>&1); then continue; fi
-	@test_result_parse.sh $@
+	@cd $^; make recompile
+	@cd $^; make run | tee test_res.txt
+	@$(RES_PARSER) $@
 
 bootloader-test:
-	@cd programs/bootloader; riscv-clean.sh; make; compile_app.sh 1 hello hello.c
-	@cd programs/bootloader; if ! (fp-emu hello.app > test_res.txt 2>&1); then continue; fi
-	@cd programs/bootloader; test_result_parse.sh test_res.txt
+	@cd programs/helloWorld; make clean; make app;
+	@cd programs/bootloader; make recompile; 
+	@cd programs/bootloader; $(IP_EMU) bootloader.mem ../helloWorld/helloworld.app | tee test_res.txt
+	@cd programs/bootloader; $(RES_PARSER) test_res.txt
 
 .PHONY: integration-clean
 # Loop through all the test dirs and do `make clean` which should remove all

@@ -1,10 +1,4 @@
-#include <flexpret_csrs.h>
-#include <flexpret_stdio.h>
-#include <flexpret_io.h>
-#include <flexpret_time.h>
-#include <flexpret_thread.h>
-#include <flexpret_assert.h>
-
+#include "interpret.h"
 
 void *t1(void *arg) {
     print_str("Hello from t1\n");

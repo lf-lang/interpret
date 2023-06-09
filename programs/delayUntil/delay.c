@@ -1,7 +1,4 @@
-#include <flexpret_io.h>
-#include <flexpret_csrs.h>
-#include <flexpret_time.h>
-#include <flexpret_assert.h>
+#include "interpret.h"
 
 int main() {
     _fp_print(1);

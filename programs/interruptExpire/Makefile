@@ -1,10 +1,5 @@
-build:
-	riscv-compile.sh 1 ispm ie.c
+NAME := interrupt
+APP_SOURCES = *.c
 
-clean:
-	riscv-clean.sh
-
-
-rebuild: clean build
-
-PHONY: build clean rebuild
+include $(INTERPRET_ROOT_DIR)/Makefrag
+include $(FLEXPRET_ROOT_DIR)/Makefrag

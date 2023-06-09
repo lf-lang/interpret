@@ -1,0 +1,23 @@
+ifndef FLEXPRET_ROOT_DIR
+$(error FLEXPRET_ROOT_DIR is not set. Please source env.bash)
+endif
+
+ifndef INTERPRET_ROOT_DIR
+$(error INTERPRET_ROOT_DIR is not set. Please source env.bash)
+endif
+
+EMU:=$(INTERPRET_ROOT_DIR)/emulator/ip-emu
+
+ifdef BOOTLOADER
+LINKER_SCRIPT := $(FLEXPRET_ROOT_DIR)/programs/lib/linker/flexpret_btl.ld	
+endif
+
+ifdef APP
+LINKER_SCRIPT := $(FLEXPRET_ROOT_DIR)/programs/lib/linker/flexpret_app.ld	
+endif
+
+include $(INTERPRET_ROOT_DIR)/lib/Makefrag
+
+
+app: compile
+	$(INTERPRET_ROOT_DIR)/programs/scripts/serialize_app.py $(NAME).mem $(NAME).app

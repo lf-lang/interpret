@@ -1,23 +1,24 @@
+ThisBuild / scalaVersion     := "2.12.10"
+ThisBuild / version          := "0.1.0"
+ThisBuild / organization     := "PRETIS"
 
-
-val chiselVersion = "3.5.5"
+val chiselVersion = "3.5.6"
 
 lazy val interpret = (project in file("."))
   .settings(
     name := "interpret",
     libraryDependencies ++= Seq(
       "edu.berkeley.cs" %% "chisel3" % chiselVersion,
-      "edu.berkeley.cs" %% "chiseltest" % "0.5.5",
+      "edu.berkeley.cs" %% "chiseltest" % "0.5.6" % "test"
     ),
-scalaVersion := "2.12.10", // Issue on scalamacros:paradise
-scalacOptions ++= Seq(
-  "-deprecation",
-  "-feature",
-  "-unchecked",
-  "-language:reflectiveCalls",
-),
-addCompilerPlugin("edu.berkeley.cs" %% "chisel3-plugin" % chiselVersion cross CrossVersion.full),
-addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full)
+    scalacOptions ++= Seq(
+      "-language:reflectiveCalls",
+      "-deprecation",
+      "-feature",
+      "-Xcheckinit",
+      "-P:chiselplugin:genBundleElements",
+    ),
+    addCompilerPlugin("edu.berkeley.cs" % "chisel3-plugin" % chiselVersion cross CrossVersion.full),
   ).dependsOn(flexpret,soc_comm)
 
 // Import flexpret

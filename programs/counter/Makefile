@@ -1,4 +1,4 @@
-NAME := hello_noc
+NAME := counter
 APP_SOURCES = *.c
 
 include $(INTERPRET_ROOT_DIR)/Makefrag

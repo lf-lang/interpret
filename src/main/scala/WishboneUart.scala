@@ -32,9 +32,6 @@ class WishboneUart(implicit cfg: TopConfig) extends WishboneDevice(4) {
   ioUart.tx := tx.txd
   rx.rxd := ioUart.rx
 
-
-  // FIXME: Use Martins FIFO
-  // MS: Queue is fine as well
   val rxFifo = Module(new Queue(UInt(8.W), 8)).io
   val txFifo = Module(new Queue(UInt(8.W), 8)).io
   rx.channel <> rxFifo.enq

@@ -1,0 +1,14 @@
+
+IP_LIB_DIR=$(INTERPRET_ROOT_DIR)/lib
+ifdef BOOTLOADER
+LIB_SOURCES += \
+    $(IP_LIB_DIR)/interpret_uart.c \
+    $(IP_LIB_DIR)/interpret_wb.c
+else
+LIB_SOURCES += \
+    $(IP_LIB_DIR)/interpret_noc.c \
+    $(IP_LIB_DIR)/interpret_uart.c \
+    $(IP_LIB_DIR)/interpret_wb.c \
+    $(IP_LIB_DIR)/interpret_stdio.c
+endif
+LIB_INCS += -I$(IP_LIB_DIR)/include
