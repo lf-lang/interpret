@@ -21,7 +21,7 @@ integration-tests: $(TEST_RESULTS) bootloader-test
 $(TEST_DIR)/%/test_res.txt: $(TEST_DIR)/%
 	@echo Executing $^
 	@cd $^; make rebuild
-	@cd $^; if ! (fp-emu > test_res.txt 2>&1); then continue; fi
+	@cd $^; if ! (ip-verilator > test_res.txt 2>&1); then continue; fi
 	@test_result_parse.sh $@
 
 bootloader-test:
