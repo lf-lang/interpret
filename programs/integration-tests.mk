@@ -26,7 +26,7 @@ $(TEST_DIR)/%/test_res.txt: $(TEST_DIR)/%
 
 bootloader-test:
 	@cd programs/bootloader; riscv-clean.sh; make; compile_app.sh 1 hello hello.c
-	@cd programs/bootloader; if ! (fp-emu hello.app > test_res.txt 2>&1); then continue; fi
+	@cd programs/bootloader; if ! (ip-verilator hello.app > test_res.txt 2>&1); then continue; fi
 	@cd programs/bootloader; test_result_parse.sh test_res.txt
 
 .PHONY: integration-clean
