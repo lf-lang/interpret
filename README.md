@@ -7,7 +7,7 @@ InterPRET is a multicore FlexPRET architecture that uses a time-predictable Netw
 ### Prerequisites
 1. Verilator
 2. SBT
-3. RISCV 32-bit toolchain
+3. RISCV toolchain on the PATH. Download prebuild [rv32i-4.0.0](https://github.com/stnolting/riscv-gcc-prebuilt)
 
 ### Clone repo and set up 
 ```

@@ -5,7 +5,7 @@ import chisel3.experimental.{annotate, ChiselAnnotation}
 import firrtl.annotations.MemorySynthInit
 import flexpret.core.{Core, FlexpretConfiguration, GPIO, HostIO, ISpm}
 
-import s4noc.{Config, S4NoCTop}
+import s4noc.{Config, S4NoCTop, RegType}
 
 
 case class TopConfig(
@@ -50,7 +50,7 @@ class Top(topCfg: TopConfig) extends Module {
   // Normally InterPRET requires 2x2, 3x3, 4x4 etc cores. But we also support the edge case of
   //  have a single core. We then make a NoC with 4 ports and just drive the remaining 3 to defaults
   val nNocPorts = if (topCfg.nCores == 1) 4 else topCfg.nCores
-  val noc = Module(new S4NoCTop(Config(nNocPorts, 2, 2, 2, 32)))
+  val noc = Module(new S4NoCTop(Config(nNocPorts, RegType(2), RegType(2), RegType(2), 32)))
 
   for (i <- 0 until nNocPorts) {
     noc.io.cpuPorts(i).wrData := 0.U

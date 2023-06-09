@@ -1,6 +1,3 @@
 [submodule "flexpret"]
 	path = flexpret
 	url = https://github.com/pretis/flexpret.git
-[submodule "soc-comm"]
-	path = soc-comm
-	url = https://github.com/t-crest/soc-comm
